@@ -55,6 +55,49 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
     const [uploadedContent, setUploadedContent] = useState<string>('');
+    const [projectName, setProjectName] = useState('');
+    const [isSendingEmail, setIsSendingEmail] = useState(false);
+    const [emailSent, setEmailSent] = useState(false);
+
+    // Send analysis report via email
+    const sendEmailReport = async () => {
+        if (!intelligentResults) return;
+
+        setIsSendingEmail(true);
+        try {
+            const res = await fetch('/api/email-analysis', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    projectName: projectName || extractedInfo.githubData?.name || extractedInfo.urlData?.title || 'My Project',
+                    timing: intelligentResults.timing,
+                    timingReason: intelligentResults.timingReason,
+                    recommendation: intelligentResults.recommendation,
+                    marketGaps: intelligentResults.marketGaps,
+                    threats: intelligentResults.threats?.map(t => ({
+                        headline: t.story?.headline || `Story ${t.storyIndex}`,
+                        reason: t.reason
+                    })) || [],
+                    opportunities: intelligentResults.opportunities?.map(o => ({
+                        headline: o.story?.headline || `Story ${o.storyIndex}`,
+                        reason: o.reason
+                    })) || [],
+                    niche: selectedNiche
+                })
+            });
+
+            if (res.ok) {
+                setEmailSent(true);
+                setTimeout(() => setEmailSent(false), 5000);
+            } else {
+                setError('Failed to send email report');
+            }
+        } catch {
+            setError('Failed to send email report');
+        } finally {
+            setIsSendingEmail(false);
+        }
+    };
 
     // Fetch URL metadata
     const fetchUrlMetadata = async (url: string) => {
@@ -213,8 +256,8 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                             key={niche.id}
                             onClick={() => setSelectedNiche(niche.id)}
                             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedNiche === niche.id
-                                    ? 'bg-indigo-500/40 text-indigo-200 border border-indigo-400/50'
-                                    : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-transparent'
+                                ? 'bg-indigo-500/40 text-indigo-200 border border-indigo-400/50'
+                                : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-transparent'
                                 }`}
                         >
                             {niche.icon} {niche.label}
@@ -364,6 +407,27 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                 {/* Analysis Results */}
                 {intelligentResults && (
                     <div className="mt-4 space-y-4">
+                        {/* Email Report Button */}
+                        <div className="flex gap-3">
+                            <input
+                                type="text"
+                                value={projectName}
+                                onChange={(e) => setProjectName(e.target.value)}
+                                placeholder="Project name (for email report)"
+                                className="flex-1 bg-black/30 border border-white/20 rounded-xl p-3 text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500/50"
+                            />
+                            <button
+                                onClick={sendEmailReport}
+                                disabled={isSendingEmail}
+                                className={`px-6 py-3 rounded-xl font-semibold transition-all ${emailSent
+                                        ? 'bg-green-500/30 text-green-300 border border-green-500/50'
+                                        : 'bg-gradient-to-r from-pink-600 to-orange-500 hover:from-pink-500 hover:to-orange-400 text-white'
+                                    }`}
+                            >
+                                {isSendingEmail ? '📤 Sending...' : emailSent ? '✅ Sent!' : '📧 Email Report'}
+                            </button>
+                        </div>
+
                         {/* Timing Assessment */}
                         <div className={`rounded-xl p-4 border ${getTimingColor(intelligentResults.timing)}`}>
                             <h3 className="font-semibold mb-2 flex items-center gap-2">
