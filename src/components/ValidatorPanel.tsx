@@ -571,9 +571,85 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
             <div className="space-y-4">
                 {/* Project Description - Required */}
                 <div>
-                    <label className="text-sm text-gray-400 mb-2 block">
-                        📝 Project Description <span className="text-purple-400">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm text-gray-400">
+                            📝 Project Description <span className="text-purple-400">*</span>
+                        </label>
+                        {/* Demo Examples Dropdown */}
+                        <div className="relative">
+                            <button
+                                onClick={() => {
+                                    const demo = document.getElementById('demo-dropdown');
+                                    if (demo) demo.classList.toggle('hidden');
+                                }}
+                                className="text-xs bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 px-3 py-1 rounded-lg border border-emerald-500/30 transition-colors"
+                            >
+                                📋 Demo Examples
+                            </button>
+                            <div id="demo-dropdown" className="hidden absolute right-0 top-8 z-50 w-64 bg-gray-900 border border-emerald-500/30 rounded-xl shadow-xl overflow-hidden">
+                                <button
+                                    onClick={() => {
+                                        setProjectDescription(`Microcatchment Pro: High-Level Summary
+
+The Problem
+Stormwater infrastructure is failing. Cities face increasing flood risks, yet understanding where water actually flows on a property or site remains expensive and inaccessible:
+
+Traditional surveys cost €5,000-15,000 for professional LiDAR or drone mapping
+GPS alone is inaccurate (5-15m error) - useless for micro-drainage patterns
+No DIY option exists for property owners, farmers, or small municipalities to affordably map their land's hydrology
+
+Our Solution
+Microcatchment Pro is a smartphone-based field surveying tool that enables anyone to create engineering-grade site maps by walking the perimeter of an area.
+
+Core Innovation: VIAP (Visual-Inertial Anchor Protocol)
+
+Screen 1 (Planning): User plots approximate boundary on satellite map
+Screen 2 (Scanning): User physically walks to each anchor point and "snaps" their precise GPS position
+Sensor Fusion: Combines GPS (global accuracy) + IMU (local precision) + Camera (visual verification)
+Output: Precise boundary polygon, calculated area, coverage heatmap
+
+Why This Works
+Challenge	Our Solution
+GPS is bouncy (±10m)	Sequential anchor snapping calibrates IMU scale
+Expensive equipment	Smartphone sensors only
+Complex software	Guided "walk to Anchor #1, #2..." workflow
+Data sovereignty	All processing on-device, data stays local
+
+Target Use Cases
+Farmers: Map drainage patterns before installing irrigation
+Property owners: Document land before construction permits
+Small municipalities: Audit stormwater infrastructure at 1/100th cost
+Environmental consultants: Quick site reconnaissance
+
+Status
+The app currently handles boundary definition and anchor calibration. The next phase is coverage surveying - walking the interior while the app tracks your path and builds a coverage heatmap of the surveyed area.`);
+                                        document.getElementById('demo-dropdown')?.classList.add('hidden');
+                                    }}
+                                    className="w-full text-left px-4 py-3 text-sm text-emerald-300 hover:bg-emerald-900/30 border-b border-emerald-500/20"
+                                >
+                                    🌊 Microcatchment Pro
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setProjectDescription(`AI-powered code review tool that uses machine learning to detect bugs, security vulnerabilities, and code quality issues before deployment. Integrates with GitHub/GitLab.`);
+                                        document.getElementById('demo-dropdown')?.classList.add('hidden');
+                                    }}
+                                    className="w-full text-left px-4 py-3 text-sm text-emerald-300 hover:bg-emerald-900/30 border-b border-emerald-500/20"
+                                >
+                                    🤖 AI Code Review Tool
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setProjectDescription(`SaaS platform for indie game developers to A/B test game mechanics, monetization strategies, and user onboarding flows without writing code.`);
+                                        document.getElementById('demo-dropdown')?.classList.add('hidden');
+                                    }}
+                                    className="w-full text-left px-4 py-3 text-sm text-emerald-300 hover:bg-emerald-900/30"
+                                >
+                                    🎮 Game Dev A/B Testing
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                     <textarea
                         value={projectDescription}
                         onChange={(e) => setProjectDescription(e.target.value)}
@@ -847,10 +923,10 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                                         <span className="text-xs font-normal text-emerald-300/60 ml-2">Market landscape</span>
                                     </h3>
                                     <div className={`px-4 py-2 rounded-xl font-bold text-lg ${ecosystemResults.marketSignal === 'EMERGING' ? 'bg-green-500/20 text-green-400 border-2 border-green-500/40' :
-                                            ecosystemResults.marketSignal === 'GROWING' ? 'bg-blue-500/20 text-blue-400 border-2 border-blue-500/40' :
-                                                ecosystemResults.marketSignal === 'HOT' ? 'bg-orange-500/20 text-orange-400 border-2 border-orange-500/40' :
-                                                    ecosystemResults.marketSignal === 'SATURATED' ? 'bg-red-500/20 text-red-400 border-2 border-red-500/40' :
-                                                        'bg-gray-500/20 text-gray-400 border-2 border-gray-500/40'
+                                        ecosystemResults.marketSignal === 'GROWING' ? 'bg-blue-500/20 text-blue-400 border-2 border-blue-500/40' :
+                                            ecosystemResults.marketSignal === 'HOT' ? 'bg-orange-500/20 text-orange-400 border-2 border-orange-500/40' :
+                                                ecosystemResults.marketSignal === 'SATURATED' ? 'bg-red-500/20 text-red-400 border-2 border-red-500/40' :
+                                                    'bg-gray-500/20 text-gray-400 border-2 border-gray-500/40'
                                         }`}>
                                         {ecosystemResults.marketSignal}
                                     </div>
