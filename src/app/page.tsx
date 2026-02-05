@@ -181,12 +181,14 @@ function QuickFilters({ activeFilter, onSelect }: { activeFilter: string; onSele
   );
 }
 
-type SourceType = 'asknews' | 'hackernews' | 'github';
+
+type SourceType = 'asknews' | 'hackernews' | 'github' | 'polymarket';
 
 const SOURCE_TABS = [
   { id: 'asknews' as SourceType, label: '📰 AskNews', description: 'Real-time AI news' },
   { id: 'hackernews' as SourceType, label: '🟠 HackerNews', description: 'Tech community' },
   { id: 'github' as SourceType, label: '🐙 GitHub', description: 'Trending repos' },
+  { id: 'polymarket' as SourceType, label: '🔮 Polymarket', description: 'Prediction markets' },
 ];
 
 export default function Home() {
@@ -223,7 +225,8 @@ export default function Home() {
       // Choose endpoint based on source
       const endpoint = source === 'asknews' ? '/api/news'
         : source === 'hackernews' ? '/api/hackernews'
-          : '/api/github';
+          : source === 'github' ? '/api/github'
+            : '/api/polymarket?category=tech';
 
       const res = await fetch(endpoint);
 
@@ -232,6 +235,25 @@ export default function Home() {
       }
 
       const data = await res.json();
+
+      // Handle Polymarket predictions differently
+      if (source === 'polymarket') {
+        const predictions = data.predictions || [];
+        const predictionStories: Story[] = predictions.map((p: { id: string; question: string; description?: string; outcomes?: Array<{ name: string; probability: number }>; volume?: string; url?: string }) => ({
+          uuid: p.id,
+          headline: `🔮 ${p.question}`,
+          summary: p.outcomes ?
+            `${p.outcomes.map((o: { name: string; probability: number }) => `${o.name}: ${o.probability}%`).join(' | ')} • Volume: ${p.volume || 'N/A'}` :
+            p.description,
+          sentiment: p.outcomes?.[0]?.probability || 50,
+          coverage: parseInt(p.volume?.replace(/[^0-9.]/g, '') || '0'),
+          url: p.url,
+          categories: ['prediction']
+        }));
+        setStories(predictionStories);
+        setDataSource('live');
+        return;
+      }
 
       if (!data.stories || data.stories.length === 0) {
         // Try cache fallback
