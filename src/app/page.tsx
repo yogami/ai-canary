@@ -388,6 +388,15 @@ export default function Home() {
             </p>
           </div>
           <div className="flex items-center gap-4">
+            {/* Demo Video Link */}
+            <a
+              href="https://res.cloudinary.com/djol0rpn5/video/upload/v1770310961/aicanary/demos/demo_video_2026_02_05.mp4"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 text-xs rounded-lg bg-gradient-to-r from-rose-600/20 to-pink-600/20 border border-rose-500/30 text-rose-300 hover:border-rose-400/50 hover:text-white transition-all flex items-center gap-1"
+            >
+              🎬 Watch Demo
+            </a>
             {/* QR Code Button for Mobile Access */}
             <button
               onClick={() => setShowQRCode(true)}
