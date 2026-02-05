@@ -233,6 +233,20 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
     const [isSendingEmail, setIsSendingEmail] = useState(false);
     const [emailSent, setEmailSent] = useState(false);
 
+    // Death Watch state - unique moat for failure signal tracking
+    interface DeathWatchResult {
+        dangerScore: number;
+        dangerLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+        signals: {
+            domainHealth: { score: number; status: string; details: string };
+            githubVelocity: { score: number; commitsLastMonth: number; trend: string; details: string };
+            sslStatus: { score: number; status: string; details: string };
+        };
+        trajectory: string;
+        recommendation: string;
+    }
+    const [deathWatchResults, setDeathWatchResults] = useState<DeathWatchResult | null>(null);
+
     // Send analysis report via email
     const sendEmailReport = async () => {
         if (!intelligentResults) return;
@@ -389,6 +403,27 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                     gap.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3)
                 ) || [];
                 onFilter(keywords);
+
+                // Run Death Watch analysis in background (unique moat feature)
+                const appUrl = contextFields.appUrl || contextFields.demoUrl || '';
+                const githubUrl = contextFields.githubUrl || '';
+                if (appUrl || githubUrl) {
+                    fetch('/api/death-watch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            domain: appUrl,
+                            githubUrl: githubUrl
+                        })
+                    })
+                        .then(res => res.json())
+                        .then(deathData => {
+                            if (deathData.dangerScore !== undefined) {
+                                setDeathWatchResults(deathData);
+                            }
+                        })
+                        .catch(err => console.log('Death Watch optional check failed:', err));
+                }
             }
         } catch (err) {
             console.error('Analysis error:', err);
@@ -633,6 +668,84 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                                             )}
                                         </div>
                                     ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 🪦 DEATH WATCH - Unique Moat: Failure Signal Aggregation */}
+                        {deathWatchResults && (
+                            <div className="space-y-4 bg-gradient-to-b from-gray-900/50 to-black/50 border-2 border-gray-600/50 rounded-2xl p-5">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xl font-bold text-gray-300 flex items-center gap-2">
+                                        🪦 Death Watch
+                                        <span className="text-xs font-normal text-gray-500 ml-2">(CB Insights doesn&apos;t have this)</span>
+                                    </h3>
+                                    <div className={`px-6 py-3 rounded-xl font-bold text-2xl ${deathWatchResults.dangerLevel === 'LOW' ? 'bg-green-500/20 text-green-400 border-2 border-green-500/40' :
+                                            deathWatchResults.dangerLevel === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-400 border-2 border-yellow-500/40' :
+                                                deathWatchResults.dangerLevel === 'HIGH' ? 'bg-orange-500/20 text-orange-400 border-2 border-orange-500/40' :
+                                                    'bg-red-500/20 text-red-400 border-2 border-red-500/40'
+                                        }`}>
+                                        Danger: {deathWatchResults.dangerScore}/100
+                                    </div>
+                                </div>
+
+                                {/* Trajectory */}
+                                <div className="bg-black/30 border border-gray-500/20 rounded-xl p-4">
+                                    <p className="text-gray-300 text-lg font-medium">{deathWatchResults.trajectory}</p>
+                                    <p className="text-gray-500 text-sm mt-1">{deathWatchResults.recommendation}</p>
+                                </div>
+
+                                {/* 3 Signal Indicators */}
+                                <div className="grid grid-cols-3 gap-3">
+                                    {/* Domain Health */}
+                                    <div className={`rounded-xl p-3 border ${deathWatchResults.signals.domainHealth.status === 'healthy' ? 'bg-green-950/30 border-green-500/30' :
+                                            deathWatchResults.signals.domainHealth.status === 'warning' ? 'bg-yellow-950/30 border-yellow-500/30' :
+                                                deathWatchResults.signals.domainHealth.status === 'critical' ? 'bg-red-950/30 border-red-500/30' :
+                                                    'bg-gray-950/30 border-gray-500/30'
+                                        }`}>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-gray-400 font-semibold text-sm">🌐 Domain</span>
+                                            <span className={`font-bold text-sm ${deathWatchResults.signals.domainHealth.status === 'healthy' ? 'text-green-400' :
+                                                    deathWatchResults.signals.domainHealth.status === 'warning' ? 'text-yellow-400' :
+                                                        deathWatchResults.signals.domainHealth.status === 'critical' ? 'text-red-400' : 'text-gray-400'
+                                                }`}>{deathWatchResults.signals.domainHealth.status.toUpperCase()}</span>
+                                        </div>
+                                        <p className="text-gray-500 text-xs">{deathWatchResults.signals.domainHealth.details}</p>
+                                    </div>
+
+                                    {/* GitHub Velocity */}
+                                    <div className={`rounded-xl p-3 border ${deathWatchResults.signals.githubVelocity.trend === 'accelerating' ? 'bg-green-950/30 border-green-500/30' :
+                                            deathWatchResults.signals.githubVelocity.trend === 'stable' ? 'bg-blue-950/30 border-blue-500/30' :
+                                                deathWatchResults.signals.githubVelocity.trend === 'slowing' ? 'bg-yellow-950/30 border-yellow-500/30' :
+                                                    deathWatchResults.signals.githubVelocity.trend === 'stalled' ? 'bg-red-950/30 border-red-500/30' :
+                                                        'bg-gray-950/30 border-gray-500/30'
+                                        }`}>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-gray-400 font-semibold text-sm">🐙 GitHub</span>
+                                            <span className={`font-bold text-sm ${deathWatchResults.signals.githubVelocity.trend === 'accelerating' ? 'text-green-400' :
+                                                    deathWatchResults.signals.githubVelocity.trend === 'stable' ? 'text-blue-400' :
+                                                        deathWatchResults.signals.githubVelocity.trend === 'slowing' ? 'text-yellow-400' :
+                                                            deathWatchResults.signals.githubVelocity.trend === 'stalled' ? 'text-red-400' : 'text-gray-400'
+                                                }`}>{deathWatchResults.signals.githubVelocity.trend.toUpperCase()}</span>
+                                        </div>
+                                        <p className="text-gray-500 text-xs">{deathWatchResults.signals.githubVelocity.details}</p>
+                                    </div>
+
+                                    {/* SSL Status */}
+                                    <div className={`rounded-xl p-3 border ${deathWatchResults.signals.sslStatus.status === 'valid' ? 'bg-green-950/30 border-green-500/30' :
+                                            deathWatchResults.signals.sslStatus.status === 'expiring' ? 'bg-yellow-950/30 border-yellow-500/30' :
+                                                deathWatchResults.signals.sslStatus.status === 'expired' ? 'bg-red-950/30 border-red-500/30' :
+                                                    'bg-gray-950/30 border-gray-500/30'
+                                        }`}>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-gray-400 font-semibold text-sm">🔒 SSL</span>
+                                            <span className={`font-bold text-sm ${deathWatchResults.signals.sslStatus.status === 'valid' ? 'text-green-400' :
+                                                    deathWatchResults.signals.sslStatus.status === 'expiring' ? 'text-yellow-400' :
+                                                        deathWatchResults.signals.sslStatus.status === 'expired' ? 'text-red-400' : 'text-gray-400'
+                                                }`}>{deathWatchResults.signals.sslStatus.status.toUpperCase()}</span>
+                                        </div>
+                                        <p className="text-gray-500 text-xs">{deathWatchResults.signals.sslStatus.details}</p>
+                                    </div>
                                 </div>
                             </div>
                         )}
