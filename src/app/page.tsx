@@ -1,6 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import {
+  getCachedStories,
+  setCachedStories,
+  addAlertToHistory,
+  isOnboardingDone,
+  markOnboardingDone
+} from '@/lib/cache';
 
 interface Story {
   uuid: string;
@@ -173,12 +180,18 @@ function QuickFilters({ activeFilter, onSelect }: { activeFilter: string; onSele
 export default function Home() {
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null); // Error state for API failures
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [dataSource, setDataSource] = useState<'live' | 'cached'>('live');
 
   useEffect(() => {
     fetchNews();
+    // Check onboarding on client side
+    if (typeof window !== 'undefined' && !isOnboardingDone()) {
+      setShowOnboarding(true);
+    }
   }, []);
 
   const fetchNews = async () => {
@@ -193,23 +206,39 @@ export default function Home() {
 
       const data = await res.json();
 
-      // Handle empty array case (Technical Judge edge case)
       if (!data.stories || data.stories.length === 0) {
+        // Try cache fallback
+        const cached = getCachedStories() as Story[] | null;
+        if (cached && cached.length > 0) {
+          setStories(cached);
+          setDataSource('cached');
+          return;
+        }
         setStories([]);
         setError('No stories available right now. Check back soon!');
         return;
       }
 
-      // Validate story structure (Technical Judge edge case)
       const validatedStories = data.stories.filter((s: Story) =>
         s.uuid && s.headline && typeof s.headline === 'string'
       );
 
       setStories(validatedStories);
+      setDataSource('live');
+      // Cache for offline support
+      setCachedStories(validatedStories);
     } catch (err) {
       console.error('Failed to fetch news:', err);
-      setError('Unable to load news. Please try again.');
-      setStories([]);
+      // Try cache fallback on error
+      const cached = getCachedStories() as Story[] | null;
+      if (cached && cached.length > 0) {
+        setStories(cached);
+        setDataSource('cached');
+        setError('Showing cached data (offline mode)');
+      } else {
+        setError('Unable to load news. Please try again.');
+        setStories([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -227,12 +256,48 @@ export default function Home() {
         throw new Error('Alert request failed');
       }
 
+      // Track alert in history (Phase 2 improvement)
+      addAlertToHistory({
+        storyId: story.uuid,
+        headline: story.headline,
+        timestamp: new Date().toISOString(),
+        channel: 'slack'
+      });
+
       setAlertMessage(`✅ Alert set for: "${story.headline.slice(0, 50)}..."`);
       setTimeout(() => setAlertMessage(null), 3000);
     } catch (err) {
       setAlertMessage('❌ Failed to set alert');
       setTimeout(() => setAlertMessage(null), 3000);
     }
+  };
+
+  // Export filtered stories to CSV (UX improvement)
+  const exportToCsv = () => {
+    const headers = ['Headline', 'Summary', 'Sentiment', 'Coverage', 'Date', 'Categories'];
+    const rows = filteredStories.map(s => [
+      `"${(s.headline || '').replace(/"/g, '""')}"`,
+      `"${(s.summary || '').replace(/"/g, '""')}"`,
+      s.sentiment?.toFixed(2) || '0',
+      s.coverage || '0',
+      s.publish_date || '',
+      (s.categories || []).join('; ')
+    ]);
+
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `aicanary-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Dismiss onboarding tooltip
+  const dismissOnboarding = () => {
+    setShowOnboarding(false);
+    markOnboardingDone();
   };
 
   // Safe search filter with special character handling (Technical Judge edge case)
@@ -248,6 +313,20 @@ export default function Home() {
 
   return (
     <div className="min-h-screen py-8 px-4 md:px-8">
+      {/* Onboarding Tooltip (first visit only) */}
+      {showOnboarding && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 glass-card px-6 py-4 z-50 fade-in max-w-md">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">💡</span>
+            <div>
+              <p className="text-white font-medium mb-1">Welcome to AICanary!</p>
+              <p className="text-gray-400 text-sm">Click ⚡ High Impact stories for early edge on AI launches. Use filters to focus on your domain.</p>
+            </div>
+            <button onClick={dismissOnboarding} className="text-gray-500 hover:text-white">✕</button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="max-w-4xl mx-auto mb-12">
         <div className="flex items-center justify-between mb-6">
@@ -259,9 +338,22 @@ export default function Home() {
               Real-time AI ecosystem intelligence • Never miss a market shift
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full pulse ${error ? 'bg-yellow-500' : 'bg-green-500'}`}></span>
-            <span className="text-sm text-gray-400">{error ? 'Limited' : 'Live'}</span>
+          <div className="flex items-center gap-4">
+            {/* Export Button */}
+            <button
+              onClick={exportToCsv}
+              disabled={filteredStories.length === 0}
+              className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              📤 Export CSV
+            </button>
+            {/* Data Source Indicator */}
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full pulse ${dataSource === 'cached' ? 'bg-yellow-500' : error ? 'bg-yellow-500' : 'bg-green-500'}`}></span>
+              <span className="text-sm text-gray-400">
+                {dataSource === 'cached' ? 'Cached' : error ? 'Limited' : 'Live'}
+              </span>
+            </div>
           </div>
         </div>
 

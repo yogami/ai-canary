@@ -46,6 +46,17 @@ export async function POST(request: NextRequest) {
         });
 
         if (!webhookResponse.ok) {
+            // Handle rate limiting (429)
+            if (webhookResponse.status === 429) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        error: 'Too many alerts. Please wait before sending more.',
+                        retryAfter: webhookResponse.headers.get('Retry-After') || '60'
+                    },
+                    { status: 429 }
+                );
+            }
             throw new Error(`Webhook failed: ${webhookResponse.status}`);
         }
 
