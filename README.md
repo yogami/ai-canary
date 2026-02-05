@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AICanary - Real-Time AI Ecosystem Intelligence
 
-## Getting Started
+🐦 Never miss a market shift. Monitor competitor launches, new models, and AI ecosystem trends in real-time.
 
-First, run the development server:
+![AICanary Dashboard](docs/dashboard.png)
+
+## Built at AI Hackday Berlin • Feb 2026
+
+This project was built for the [AI Hackday Berlin](https://ailbuilders-hub.vercel.app/hackday/BER-Feb5-HDAY) hackathon, leveraging:
+- **AskNews API** for real-time AI news intelligence
+- **ActivePieces** for automation and alerts
+
+## Features
+
+- 📊 **Real-Time AI News Feed** - Live updates from the AI ecosystem via AskNews
+- 🔍 **Smart Search** - Filter stories by keywords and topics
+- 📈 **Sentiment Analysis** - Bullish/Bearish/Neutral indicators on each story
+- 🔔 **Alert System** - Get notified when important stories break (via ActivePieces webhooks)
+- 💜 **Premium Design** - Glassmorphism UI with smooth animations
+
+## Tech Stack
+
+- **Frontend**: Next.js 16 + TypeScript + Tailwind CSS
+- **APIs**: AskNews (News Intelligence), ActivePieces (Automation)
+- **Testing**: Playwright E2E (14 tests covering happy paths and edge cases)
+- **Deployment**: Railway (recommended)
+
+## Quick Start
 
 ```bash
+# Install dependencies
+npm install
+
+# Set up environment
+cp .env.example .env.local
+# Edit .env.local with your API keys
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Run E2E tests
+npm run test:e2e
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```env
+ASKNEWS_API_KEY=your_asknews_api_key
+ACTIVEPIECES_WEBHOOK_URL=your_activepieces_webhook_url
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## E2E Test Coverage
 
-## Learn More
+The test suite covers:
 
-To learn more about Next.js, take a look at the following resources:
+### Happy Paths
+- Dashboard loads with header and stats
+- News stories display from API
+- Search filtering works
+- Alert toast shows on button click
+- Sentiment badges display correctly
+- Coverage percentages shown
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Edge Cases
+- Empty search handling
+- No results messaging
+- Footer branding
+- Mobile responsiveness
+- Toast auto-dismiss
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### API Integration
+- News API returns valid response
+- Alert API handles POST
+- Story fields validation
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Railway deployment is recommended:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+# Build for production
+npm run build
+
+# Or deploy via Railway CLI
+railway up
+```
+
+After deployment, run E2E tests against production:
+
+```bash
+BASE_URL=https://your-app.railway.app npm run test:e2e
+```
+
+## License
+
+MIT - Built with 💜 at AI Hackday Berlin
