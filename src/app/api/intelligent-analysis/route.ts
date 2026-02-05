@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 
-// Groq API for free LLM access
+// LLM APIs - try Groq first (free), fallback to OpenRouter
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 interface IntelligentAnalysisRequest {
     projectDescription: string;
@@ -347,33 +348,78 @@ Format your response as JSON:
 }`;
         }
 
-        const response = await fetch(GROQ_API_URL, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${groqApiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: 'llama-3.1-8b-instant',
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: userPrompt }
-                ],
-                temperature: 0.3,
-                max_tokens: 1500,
-                response_format: { type: 'json_object' }
-            })
-        });
+        // Try Groq first, fallback to OpenRouter if it fails
+        const openRouterKey = process.env.OPENROUTER_API_KEY;
+        let response: Response;
+        let usedProvider = 'groq';
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Groq API error:', errorText);
-            return NextResponse.json({
-                analysis: generateFallbackAnalysis(projectDescription, stories),
-                source: 'fallback',
-                error: 'LLM API temporarily unavailable'
+        try {
+            response = await fetch(GROQ_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${groqApiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'llama-3.1-8b-instant',
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt }
+                    ],
+                    temperature: 0.3,
+                    max_tokens: 1500,
+                    response_format: { type: 'json_object' }
+                })
             });
+
+            if (!response.ok) {
+                throw new Error(`Groq error: ${response.status}`);
+            }
+        } catch (groqError) {
+            console.warn('Groq failed, trying OpenRouter:', groqError);
+
+            // Fallback to OpenRouter
+            if (!openRouterKey) {
+                console.error('No OpenRouter key available for fallback');
+                return NextResponse.json({
+                    analysis: generateFallbackAnalysis(projectDescription, stories),
+                    source: 'fallback',
+                    error: 'LLM API temporarily unavailable'
+                });
+            }
+
+            usedProvider = 'openrouter';
+            response = await fetch(OPENROUTER_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${openRouterKey}`,
+                    'Content-Type': 'application/json',
+                    'HTTP-Referer': 'https://ai-canary-production.up.railway.app',
+                    'X-Title': 'AICanary'
+                },
+                body: JSON.stringify({
+                    model: 'meta-llama/llama-3.1-8b-instruct:free',
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt }
+                    ],
+                    temperature: 0.3,
+                    max_tokens: 1500
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('OpenRouter also failed:', errorText);
+                return NextResponse.json({
+                    analysis: generateFallbackAnalysis(projectDescription, stories),
+                    source: 'fallback',
+                    error: 'LLM API temporarily unavailable'
+                });
+            }
         }
+
+        console.log(`LLM analysis completed using: ${usedProvider}`);
 
         const data = await response.json();
         const analysisText = data.choices?.[0]?.message?.content;
