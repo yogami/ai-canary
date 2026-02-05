@@ -25,30 +25,134 @@ interface AnalysisResult {
     recommendation: string;
 }
 
-type Niche = 'technology' | 'ai' | 'media' | 'film' | 'music' | 'gaming' | 'fintech' | 'healthcare' | 'climate';
+type Niche = 'ai' | 'media' | 'music' | 'gaming' | 'fintech' | 'healthcare' | 'climate';
 
-const NICHES: { id: Niche; label: string; icon: string }[] = [
-    { id: 'ai', label: 'AI/Tech', icon: '🤖' },
-    { id: 'media', label: 'Media', icon: '🎬' },
-    { id: 'music', label: 'Music', icon: '🎵' },
-    { id: 'fintech', label: 'FinTech', icon: '💰' },
-    { id: 'healthcare', label: 'Healthcare', icon: '🏥' },
-    { id: 'climate', label: 'Climate', icon: '🌍' },
-    { id: 'gaming', label: 'Gaming', icon: '🎮' },
+interface NicheField {
+    key: string;
+    label: string;
+    icon: string;
+    placeholder: string;
+    type: 'text' | 'url' | 'select';
+    options?: string[];
+}
+
+interface NicheConfig {
+    id: Niche;
+    label: string;
+    icon: string;
+    descriptionPlaceholder: string;
+    fields: NicheField[];
+}
+
+const NICHE_CONFIGS: NicheConfig[] = [
+    {
+        id: 'ai',
+        label: 'AI/Tech',
+        icon: '🤖',
+        descriptionPlaceholder: 'Describe your AI/tech product, API, or SaaS...',
+        fields: [
+            { key: 'appUrl', label: 'App/Website URL', icon: '🌐', placeholder: 'https://your-app.com', type: 'url' },
+            { key: 'githubUrl', label: 'GitHub Repo', icon: '🐙', placeholder: 'https://github.com/user/repo', type: 'url' },
+            { key: 'targetAudience', label: 'Target Users', icon: '👥', placeholder: 'e.g., DevOps teams, CTOs, indie developers', type: 'text' },
+            { key: 'competitors', label: 'Competitors', icon: '⚔️', placeholder: 'e.g., OpenAI, Anthropic, Hugging Face', type: 'text' },
+        ]
+    },
+    {
+        id: 'media',
+        label: 'Film/TV',
+        icon: '🎬',
+        descriptionPlaceholder: 'Describe your film, show concept, or script idea...',
+        fields: [
+            { key: 'genre', label: 'Genre', icon: '🎭', placeholder: 'e.g., Sci-Fi Thriller, Drama, Documentary', type: 'text' },
+            { key: 'format', label: 'Format', icon: '📺', placeholder: 'e.g., Feature Film, Series, Short', type: 'text' },
+            { key: 'budget', label: 'Budget Range', icon: '💵', placeholder: 'e.g., Low (<$1M), Mid ($1-10M), High (>$10M)', type: 'text' },
+            { key: 'comparables', label: 'Comparable Films', icon: '🎥', placeholder: 'e.g., Ex Machina, Black Mirror, Arrival', type: 'text' },
+        ]
+    },
+    {
+        id: 'music',
+        label: 'Music',
+        icon: '🎵',
+        descriptionPlaceholder: 'Describe your music project, album concept, or artist brand...',
+        fields: [
+            { key: 'genre', label: 'Genre/Style', icon: '🎸', placeholder: 'e.g., Indie Pop, Electronic, Hip-Hop', type: 'text' },
+            { key: 'demoUrl', label: 'Demo/Sample Link', icon: '🔗', placeholder: 'https://soundcloud.com/... or spotify link', type: 'url' },
+            { key: 'artistType', label: 'Artist Type', icon: '🎤', placeholder: 'e.g., Solo artist, Band, Producer, Label', type: 'text' },
+            { key: 'comparables', label: 'Similar Artists', icon: '👥', placeholder: 'e.g., Billie Eilish, The Weeknd, Daft Punk', type: 'text' },
+        ]
+    },
+    {
+        id: 'gaming',
+        label: 'Gaming',
+        icon: '🎮',
+        descriptionPlaceholder: 'Describe your game concept, mechanics, and vision...',
+        fields: [
+            { key: 'genre', label: 'Game Genre', icon: '🕹️', placeholder: 'e.g., RPG, FPS, Puzzle, Indie', type: 'text' },
+            { key: 'platform', label: 'Platform', icon: '💻', placeholder: 'e.g., PC, Mobile, Console, VR', type: 'text' },
+            { key: 'demoUrl', label: 'Demo/Trailer Link', icon: '🎬', placeholder: 'https://itch.io/... or Steam page', type: 'url' },
+            { key: 'comparables', label: 'Similar Games', icon: '🎯', placeholder: 'e.g., Stardew Valley, Hollow Knight, Hades', type: 'text' },
+        ]
+    },
+    {
+        id: 'fintech',
+        label: 'FinTech',
+        icon: '💰',
+        descriptionPlaceholder: 'Describe your financial product, payment solution, or trading tool...',
+        fields: [
+            { key: 'appUrl', label: 'Product URL', icon: '🌐', placeholder: 'https://your-fintech.com', type: 'url' },
+            { key: 'region', label: 'Target Region', icon: '🌍', placeholder: 'e.g., EU, US, APAC, Global', type: 'text' },
+            { key: 'compliance', label: 'Compliance Needs', icon: '📋', placeholder: 'e.g., PSD2, SOC2, GDPR, None yet', type: 'text' },
+            { key: 'competitors', label: 'Competitors', icon: '⚔️', placeholder: 'e.g., Stripe, Plaid, Revolut', type: 'text' },
+        ]
+    },
+    {
+        id: 'healthcare',
+        label: 'HealthTech',
+        icon: '🏥',
+        descriptionPlaceholder: 'Describe your health solution, medical device, or wellness app...',
+        fields: [
+            { key: 'appUrl', label: 'Product URL', icon: '🌐', placeholder: 'https://your-health-app.com', type: 'url' },
+            { key: 'category', label: 'Category', icon: '🩺', placeholder: 'e.g., Diagnostics, Wellness, Telehealth, Devices', type: 'text' },
+            { key: 'regulatory', label: 'Regulatory Path', icon: '📋', placeholder: 'e.g., FDA, CE Mark, HIPAA, None yet', type: 'text' },
+            { key: 'targetAudience', label: 'Target Users', icon: '👥', placeholder: 'e.g., Patients, Clinicians, Hospitals', type: 'text' },
+        ]
+    },
+    {
+        id: 'climate',
+        label: 'Climate',
+        icon: '🌍',
+        descriptionPlaceholder: 'Describe your climate solution, sustainability tool, or green tech...',
+        fields: [
+            { key: 'sector', label: 'Sector', icon: '🌱', placeholder: 'e.g., Energy, Agriculture, Transport, Construction', type: 'text' },
+            { key: 'region', label: 'Geographic Focus', icon: '📍', placeholder: 'e.g., Europe, Global, Developing markets', type: 'text' },
+            { key: 'impactMetric', label: 'Impact Metric', icon: '📊', placeholder: 'e.g., CO2 reduced, Water saved, Land restored', type: 'text' },
+            { key: 'targetAudience', label: 'Target Users', icon: '👥', placeholder: 'e.g., Municipalities, Farmers, Corporations', type: 'text' },
+        ]
+    },
 ];
 
 export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProps) {
     const [selectedNiche, setSelectedNiche] = useState<Niche>('ai');
     const [projectDescription, setProjectDescription] = useState('');
-    const [appUrl, setAppUrl] = useState('');
-    const [githubUrl, setGithubUrl] = useState('');
-    const [targetAudience, setTargetAudience] = useState('');
-    const [competitors, setCompetitors] = useState('');
+    const [contextFields, setContextFields] = useState<Record<string, string>>({});
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [extractedInfo, setExtractedInfo] = useState<{
         urlData?: { title: string; description: string };
         githubData?: { name: string; description: string; topics: string[] };
     }>({});
+
+    // Get current niche configuration
+    const currentNiche = NICHE_CONFIGS.find(n => n.id === selectedNiche) || NICHE_CONFIGS[0];
+
+    // Update context field value
+    const updateContextField = (key: string, value: string) => {
+        setContextFields(prev => ({ ...prev, [key]: value }));
+    };
+
+    const handleNicheChange = (niche: Niche) => {
+        setSelectedNiche(niche);
+        setContextFields({});
+    };
     const [intelligentResults, setIntelligentResults] = useState<AnalysisResult | null>(null);
     const [analysisSource, setAnalysisSource] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
@@ -131,8 +235,11 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
 
     // Run the full analysis
     const runAnalysis = async () => {
+        const appUrl = contextFields.appUrl || contextFields.demoUrl || '';
+        const githubUrl = contextFields.githubUrl || '';
+
         if (!projectDescription.trim() && !appUrl.trim() && !githubUrl.trim() && !uploadedContent) {
-            setError('Please provide at least a project description, URL, or GitHub repo');
+            setError('Please provide at least a project description, URL, or documentation');
             return;
         }
 
@@ -173,13 +280,14 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                 fullDescription += `\n\nUploaded Documentation:\n${uploadedContent.slice(0, 2000)}`;
             }
 
-            if (targetAudience) {
-                fullDescription += `\n\nTarget Audience: ${targetAudience}`;
-            }
-
-            if (competitors) {
-                fullDescription += `\n\nKnown Competitors: ${competitors}`;
-            }
+            // Add all context fields to description
+            Object.entries(contextFields).forEach(([key, value]) => {
+                if (value && key !== 'appUrl' && key !== 'githubUrl' && key !== 'demoUrl') {
+                    const fieldConfig = currentNiche.fields.find(f => f.key === key);
+                    const label = fieldConfig?.label || key;
+                    fullDescription += `\n\n${label}: ${value}`;
+                }
+            });
 
             // Call intelligent analysis API
             const res = await fetch('/api/intelligent-analysis', {
@@ -251,10 +359,10 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
             <div className="mb-5">
                 <label className="text-sm text-gray-400 mb-2 block">Industry/Niche:</label>
                 <div className="flex flex-wrap gap-2">
-                    {NICHES.map((niche) => (
+                    {NICHE_CONFIGS.map((niche) => (
                         <button
                             key={niche.id}
-                            onClick={() => setSelectedNiche(niche.id)}
+                            onClick={() => handleNicheChange(niche.id)}
                             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${selectedNiche === niche.id
                                 ? 'bg-indigo-500/40 text-indigo-200 border border-indigo-400/50'
                                 : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-transparent'
@@ -281,63 +389,22 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                     />
                 </div>
 
-                {/* Two-column grid for optional fields */}
+                {/* Dynamic Context Fields based on selected niche */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* App URL */}
-                    <div>
-                        <label className="text-sm text-gray-400 mb-2 block">
-                            🌐 App/Website URL <span className="text-gray-500">(optional)</span>
-                        </label>
-                        <input
-                            type="url"
-                            value={appUrl}
-                            onChange={(e) => setAppUrl(e.target.value)}
-                            placeholder="https://your-app.com"
-                            className="w-full bg-black/30 border border-white/20 rounded-xl p-3 text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500/50"
-                        />
-                    </div>
-
-                    {/* GitHub URL */}
-                    <div>
-                        <label className="text-sm text-gray-400 mb-2 block">
-                            🐙 GitHub Repo URL <span className="text-gray-500">(optional)</span>
-                        </label>
-                        <input
-                            type="url"
-                            value={githubUrl}
-                            onChange={(e) => setGithubUrl(e.target.value)}
-                            placeholder="https://github.com/user/repo"
-                            className="w-full bg-black/30 border border-white/20 rounded-xl p-3 text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500/50"
-                        />
-                    </div>
-
-                    {/* Target Audience */}
-                    <div>
-                        <label className="text-sm text-gray-400 mb-2 block">
-                            👥 Target Audience <span className="text-gray-500">(optional)</span>
-                        </label>
-                        <input
-                            type="text"
-                            value={targetAudience}
-                            onChange={(e) => setTargetAudience(e.target.value)}
-                            placeholder="e.g., CTOs at mid-size companies, indie game developers"
-                            className="w-full bg-black/30 border border-white/20 rounded-xl p-3 text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500/50"
-                        />
-                    </div>
-
-                    {/* Known Competitors */}
-                    <div>
-                        <label className="text-sm text-gray-400 mb-2 block">
-                            ⚔️ Known Competitors <span className="text-gray-500">(optional)</span>
-                        </label>
-                        <input
-                            type="text"
-                            value={competitors}
-                            onChange={(e) => setCompetitors(e.target.value)}
-                            placeholder="e.g., Notion, Coda, Roam Research"
-                            className="w-full bg-black/30 border border-white/20 rounded-xl p-3 text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500/50"
-                        />
-                    </div>
+                    {currentNiche.fields.map((field) => (
+                        <div key={field.key}>
+                            <label className="text-sm text-gray-400 mb-2 block">
+                                {field.icon} {field.label} <span className="text-gray-500">(optional)</span>
+                            </label>
+                            <input
+                                type={field.type}
+                                value={contextFields[field.key] || ''}
+                                onChange={(e) => updateContextField(field.key, e.target.value)}
+                                placeholder={field.placeholder}
+                                className="w-full bg-black/30 border border-white/20 rounded-xl p-3 text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500/50"
+                            />
+                        </div>
+                    ))}
                 </div>
 
                 {/* File Upload */}
@@ -363,7 +430,7 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                 {/* Analyze Button */}
                 <button
                     onClick={runAnalysis}
-                    disabled={isAnalyzing || (!projectDescription.trim() && !appUrl.trim() && !githubUrl.trim() && !uploadedContent)}
+                    disabled={isAnalyzing || (!projectDescription.trim() && !Object.values(contextFields).some(v => v?.trim()) && !uploadedContent)}
                     className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-all text-lg"
                 >
                     {isAnalyzing ? '🧠 AI Analyzing Your Project...' : '🔍 Validate My Idea'}
@@ -420,8 +487,8 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                                 onClick={sendEmailReport}
                                 disabled={isSendingEmail}
                                 className={`px-6 py-3 rounded-xl font-semibold transition-all ${emailSent
-                                        ? 'bg-green-500/30 text-green-300 border border-green-500/50'
-                                        : 'bg-gradient-to-r from-pink-600 to-orange-500 hover:from-pink-500 hover:to-orange-400 text-white'
+                                    ? 'bg-green-500/30 text-green-300 border border-green-500/50'
+                                    : 'bg-gradient-to-r from-pink-600 to-orange-500 hover:from-pink-500 hover:to-orange-400 text-white'
                                     }`}
                             >
                                 {isSendingEmail ? '📤 Sending...' : emailSent ? '✅ Sent!' : '📧 Email Report'}
