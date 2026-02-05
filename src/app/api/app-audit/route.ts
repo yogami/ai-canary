@@ -202,21 +202,31 @@ async function analyzeBusinessContext(
             };
         }
 
-        const prompt = `Analyze this app/website for business viability:
+        const prompt = `Analyze this app/website for business viability.
 
-URL: ${url}
-Title: ${title}
-Description: ${description}
-Problem Being Solved: ${problemStatement}
+## PROVIDED DATA (You MUST base your analysis ONLY on this information):
+- URL: ${url}
+- Title: ${title}
+- Description: ${description}
+- Problem statement: ${problemStatement}
 
-Provide a JSON response with:
+## ANTI-HALLUCINATION RULES:
+1. ONLY make claims that are directly supported by the provided data above
+2. If information is missing or unclear, say "Unable to determine" or "Not enough data"
+3. DO NOT invent competitor names, funding amounts, or market statistics
+4. Use hedging language ("appears to", "suggests", "based on available data") when uncertain
+5. If you cannot assess something, give it a score of 50 (neutral) with explanation
+
+## REQUIRED OUTPUT FORMAT (JSON only):
 {
-  "problemFit": "How well does this app solve the stated problem? (1-2 sentences)",
-  "targetAudienceClarity": "How clear is the target audience? (1 sentence)",  
-  "valuePropositionStrength": "How compelling is the value proposition? (1 sentence)",
-  "competitiveGaps": ["List 2-3 potential gaps vs competitors"],
-  "recommendations": ["List 2-3 business recommendations"],
-  "score": 0-100
+  "problemFit": "Assessment based ONLY on title/description (1-2 sentences). Say 'Unable to determine' if unclear.",
+  "targetAudienceClarity": "Assessment of clarity based on available text (1 sentence)",  
+  "valuePropositionStrength": "Strength assessment based on description/title (1 sentence)",
+  "competitiveGaps": ["Gap 1 based on what's missing from description", "Gap 2"],
+  "recommendations": ["Recommendation 1 based on observed gaps", "Recommendation 2"],
+  "score": 0-100,
+  "confidence": "HIGH/MEDIUM/LOW based on data quality",
+  "dataSource": "Explain what data you used to make this assessment"
 }`;
 
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -228,11 +238,20 @@ Provide a JSON response with:
             body: JSON.stringify({
                 model: 'llama-3.3-70b-versatile',
                 messages: [
-                    { role: 'system', content: 'You are a startup analyst. Respond only with valid JSON.' },
+                    {
+                        role: 'system',
+                        content: `You are a startup analyst. You MUST follow these rules:
+1. Respond ONLY with valid JSON - no markdown, no explanations outside JSON
+2. NEVER fabricate information - only use what is explicitly provided
+3. If data is insufficient, output conservative scores (40-60) and explain gaps
+4. Include a "confidence" field indicating your certainty level
+5. Include a "dataSource" field citing what input data you used
+6. Prefer saying "Unable to determine" over making assumptions`
+                    },
                     { role: 'user', content: prompt }
                 ],
-                temperature: 0.3,
-                max_tokens: 500
+                temperature: 0.2, // Lower temperature for more deterministic output
+                max_tokens: 600
             })
         });
 

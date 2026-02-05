@@ -166,6 +166,20 @@ export async function POST(request: Request) {
         let systemPrompt: string;
         let userPrompt: string;
 
+        // ANTI-HALLUCINATION RULES - Applied to ALL prompts
+        const antiHallucinationRules = `
+
+## ANTI-HALLUCINATION REQUIREMENTS (CRITICAL):
+1. ONLY cite information that appears in the provided news stories or project description
+2. When referencing news/stories, ALWAYS cite the story number (e.g., "Story #3 mentions...")
+3. DO NOT invent company names, funding amounts, market sizes, or statistics not in the data
+4. If you cannot make an assessment due to missing data, explicitly say "Insufficient data to determine"
+5. Use hedging language ("appears to", "based on provided data", "suggests") for inferences
+6. Include a "confidence" field (HIGH/MEDIUM/LOW) indicating data quality for each major claim
+7. Include a "dataSources" array listing which story numbers you used for key conclusions
+8. If no relevant news stories exist, be honest: "No directly relevant news found in provided data"
+`;
+
         if (safeNiche === 'media' || safeNiche === 'film') {
             // PRODUCER PANEL: Multi-persona film industry analysis
             systemPrompt = `You are a PRODUCER CONSORTIUM evaluating a film/TV project pitch. You will role-play as 3 industry veterans with different perspectives:
@@ -399,7 +413,7 @@ Format your response as JSON:
                 body: JSON.stringify({
                     model: 'llama-3.1-8b-instant',
                     messages: [
-                        { role: 'system', content: systemPrompt },
+                        { role: 'system', content: systemPrompt + antiHallucinationRules },
                         { role: 'user', content: userPrompt }
                     ],
                     temperature: 0.3,
@@ -436,7 +450,7 @@ Format your response as JSON:
                 body: JSON.stringify({
                     model: 'meta-llama/llama-3.1-8b-instruct:free',
                     messages: [
-                        { role: 'system', content: systemPrompt },
+                        { role: 'system', content: systemPrompt + antiHallucinationRules },
                         { role: 'user', content: userPrompt }
                     ],
                     temperature: 0.3,
