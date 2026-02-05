@@ -116,7 +116,96 @@ export async function POST(request: Request) {
             `${i + 1}. [${s.sentiment || 'neutral'}] ${sanitizeInput(s.headline).slice(0, 100)}`
         ).join('\n');
 
-        const systemPrompt = `You are a strategic market analyst for ${safeNiche} projects. Your job is to analyze a project description and identify:
+        // NICHE-SPECIFIC PROMPTS
+        let systemPrompt: string;
+        let userPrompt: string;
+
+        if (safeNiche === 'media' || safeNiche === 'film') {
+            // PRODUCER PANEL: Multi-persona film industry analysis
+            systemPrompt = `You are a PRODUCER CONSORTIUM evaluating a film/TV project pitch. You will role-play as 3 industry veterans with different perspectives:
+
+🎬 SARAH CHEN (Studio Executive) - 20 years at major studios. Focus on:
+- Commercial viability and box office potential
+- Star/director attachment possibilities
+- Marketing hooks and four-quadrant appeal
+- IP value and franchise potential
+
+🎥 MARCUS OKONJO (Indie Producer) - Award-winning independent producer. Focus on:
+- Story integrity and artistic merit
+- Festival potential (Sundance, Cannes, TIFF)
+- Critical acclaim likelihood
+- Social/cultural relevance
+
+🌍 ELENA VOLKOV (International Sales) - Head of acquisitions. Focus on:
+- Foreign market appeal
+- Genre performance by territory
+- Co-production opportunities
+- Streaming platform fit
+
+Each producer gives their honest assessment based on their experience.`;
+
+            userPrompt = `## PROJECT PITCH:
+${sanitizedDescription}
+
+## CURRENT ENTERTAINMENT NEWS (${limitedStories.length} stories):
+${storySummaries}
+
+## PRODUCER PANEL EVALUATION REQUIRED:
+
+Each producer should provide:
+1. Gut reaction score (0-10)
+2. Key strengths they see
+3. Concerns/red flags
+4. What would make them say "yes"
+5. Which news stories (by number) are relevant
+
+Also provide:
+- Overall timing assessment for this type of project
+- Market gaps this could fill
+- Strategic recommendation
+
+Format your response as JSON:
+{
+  "producerPanel": [
+    {
+      "name": "Sarah Chen",
+      "role": "Studio Executive",
+      "score": 7,
+      "strengths": ["commercial hook", "timely topic"],
+      "concerns": ["budget concerns", "similar projects in development"],
+      "whatWouldMakeThemSayYes": "A-list attachment or proven IP",
+      "relevantStories": [1, 5]
+    },
+    {
+      "name": "Marcus Okonjo", 
+      "role": "Indie Producer",
+      "score": 8,
+      "strengths": ["unique voice", "festival potential"],
+      "concerns": ["narrow audience"],
+      "whatWouldMakeThemSayYes": "Director with strong vision",
+      "relevantStories": [3]
+    },
+    {
+      "name": "Elena Volkov",
+      "role": "International Sales",
+      "score": 6,
+      "strengths": ["genre travels well"],
+      "concerns": ["culturally specific elements"],
+      "whatWouldMakeThemSayYes": "European co-production potential",
+      "relevantStories": [2, 4]
+    }
+  ],
+  "consensusScore": 7,
+  "timing": "good|neutral|risky",
+  "timingReason": "...",
+  "marketGaps": ["gap1", "gap2"],
+  "threats": [{"storyIndex": 1, "reason": "..."}],
+  "opportunities": [{"storyIndex": 2, "reason": "..."}],
+  "recommendation": "..."
+}`;
+        } else {
+            // DEFAULT: Standard market analysis for other niches
+            systemPrompt = `You are a strategic market analyst for ${safeNiche} projects. Your job is to analyze a project description and identify:
 1. THREATS: News stories that represent competition, market saturation, or negative trends
 2. OPPORTUNITIES: News stories that validate the market, show gaps, or positive momentum
 3. POSITIONING: How this project should position itself given current market signals
@@ -124,10 +213,10 @@ export async function POST(request: Request) {
 
 Be specific and reference actual story numbers from the provided news.`;
 
-        const userPrompt = `## Project Description:
-${projectDescription}
+            userPrompt = `## Project Description:
+${sanitizedDescription}
 
-## Current ${niche.toUpperCase()} News (${stories.length} stories):
+## Current ${safeNiche.toUpperCase()} News (${limitedStories.length} stories):
 ${storySummaries}
 
 ## Analysis Required:
@@ -146,6 +235,7 @@ Format your response as JSON:
   "timingReason": "...",
   "recommendation": "..."
 }`;
+        }
 
         const response = await fetch(GROQ_API_URL, {
             method: 'POST',
