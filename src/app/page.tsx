@@ -13,8 +13,31 @@ interface Story {
   url?: string;
 }
 
+// Loading skeleton for story cards (Technical Judge feedback)
+function StoryCardSkeleton() {
+  return (
+    <div className="glass-card p-6 animate-pulse">
+      <div className="flex items-start justify-between gap-4 mb-3">
+        <div className="flex-1">
+          <div className="h-5 bg-gray-700 rounded w-3/4 mb-2"></div>
+          <div className="h-5 bg-gray-700 rounded w-1/2"></div>
+        </div>
+        <div className="h-6 w-20 bg-gray-700 rounded-full"></div>
+      </div>
+      <div className="h-4 bg-gray-700 rounded w-full mb-2"></div>
+      <div className="h-4 bg-gray-700 rounded w-2/3 mb-4"></div>
+      <div className="flex items-center justify-between">
+        <div className="h-4 w-24 bg-gray-700 rounded"></div>
+        <div className="h-10 w-28 bg-gray-700 rounded-xl"></div>
+      </div>
+    </div>
+  );
+}
+
 function SentimentBadge({ sentiment }: { sentiment?: number }) {
-  if (sentiment === undefined) return null;
+  if (sentiment === undefined || sentiment === null) {
+    return <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-400">⏳ Loading</span>;
+  }
 
   const getSentimentClass = () => {
     if (sentiment > 0.3) return 'sentiment-positive';
@@ -35,13 +58,35 @@ function SentimentBadge({ sentiment }: { sentiment?: number }) {
   );
 }
 
+// Impact Score Badge (Perplexity strategic recommendation - sentiment * coverage)
+function ImpactBadge({ sentiment, coverage }: { sentiment?: number; coverage?: number }) {
+  if (sentiment === undefined || coverage === undefined) return null;
+
+  // Calculate impact score: |sentiment| * coverage / 100
+  const impactScore = Math.abs(sentiment) * (coverage / 100);
+
+  if (impactScore > 0.3) {
+    return (
+      <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+        ⚡ High Impact
+      </span>
+    );
+  }
+  return null;
+}
+
 function StoryCard({ story, onAlert }: { story: Story; onAlert: (story: Story) => void }) {
   return (
     <div className="glass-card p-6 fade-in">
       <div className="flex items-start justify-between gap-4 mb-3">
-        <h3 className="text-lg font-semibold text-white leading-tight flex-1">
-          {story.headline}
-        </h3>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <ImpactBadge sentiment={story.sentiment} coverage={story.coverage} />
+          </div>
+          <h3 className="text-lg font-semibold text-white leading-tight">
+            {story.headline}
+          </h3>
+        </div>
         <SentimentBadge sentiment={story.sentiment} />
       </div>
 
@@ -53,7 +98,7 @@ function StoryCard({ story, onAlert }: { story: Story; onAlert: (story: Story) =
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          {story.coverage && (
+          {story.coverage !== undefined && (
             <span className="text-xs text-gray-500">
               📊 {story.coverage}% coverage
             </span>
@@ -97,9 +142,38 @@ function SearchBar({ value, onChange }: { value: string; onChange: (v: string) =
   );
 }
 
+// Quick filters for AI domains (UX Judge feedback)
+const QUICK_FILTERS = [
+  { label: '🤖 LLMs', query: 'LLM' },
+  { label: '🎨 GenAI', query: 'generative' },
+  { label: '💰 Funding', query: 'funding' },
+  { label: '🚀 Launches', query: 'launch' },
+  { label: '📊 Research', query: 'research' },
+];
+
+function QuickFilters({ activeFilter, onSelect }: { activeFilter: string; onSelect: (q: string) => void }) {
+  return (
+    <div className="flex flex-wrap gap-2 mt-4">
+      {QUICK_FILTERS.map((filter) => (
+        <button
+          key={filter.query}
+          onClick={() => onSelect(activeFilter === filter.query ? '' : filter.query)}
+          className={`px-3 py-1.5 text-xs rounded-full transition-all ${activeFilter === filter.query
+            ? 'bg-indigo-500 text-white'
+            : 'bg-white/5 text-gray-400 hover:bg-white/10'
+            }`}
+        >
+          {filter.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function Home() {
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null); // Error state for API failures
   const [search, setSearch] = useState('');
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
@@ -110,11 +184,32 @@ export default function Home() {
   const fetchNews = async () => {
     try {
       setLoading(true);
+      setError(null);
       const res = await fetch('/api/news');
+
+      if (!res.ok) {
+        throw new Error(`API error: ${res.status}`);
+      }
+
       const data = await res.json();
-      setStories(data.stories || []);
-    } catch (error) {
-      console.error('Failed to fetch news:', error);
+
+      // Handle empty array case (Technical Judge edge case)
+      if (!data.stories || data.stories.length === 0) {
+        setStories([]);
+        setError('No stories available right now. Check back soon!');
+        return;
+      }
+
+      // Validate story structure (Technical Judge edge case)
+      const validatedStories = data.stories.filter((s: Story) =>
+        s.uuid && s.headline && typeof s.headline === 'string'
+      );
+
+      setStories(validatedStories);
+    } catch (err) {
+      console.error('Failed to fetch news:', err);
+      setError('Unable to load news. Please try again.');
+      setStories([]);
     } finally {
       setLoading(false);
     }
@@ -127,21 +222,29 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ story, channel: 'slack' }),
       });
-      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error('Alert request failed');
+      }
 
       setAlertMessage(`✅ Alert set for: "${story.headline.slice(0, 50)}..."`);
       setTimeout(() => setAlertMessage(null), 3000);
-    } catch (error) {
+    } catch (err) {
       setAlertMessage('❌ Failed to set alert');
       setTimeout(() => setAlertMessage(null), 3000);
     }
   };
 
-  const filteredStories = stories.filter(story =>
-    search === '' ||
-    story.headline.toLowerCase().includes(search.toLowerCase()) ||
-    story.summary?.toLowerCase().includes(search.toLowerCase())
-  );
+  // Safe search filter with special character handling (Technical Judge edge case)
+  const escapeRegex = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  const filteredStories = stories.filter((story) => {
+    if (search === '') return true;
+    const searchLower = search.toLowerCase();
+    const headlineLower = (story.headline || '').toLowerCase();
+    const summaryLower = (story.summary || '').toLowerCase();
+    return headlineLower.includes(searchLower) || summaryLower.includes(searchLower);
+  });
 
   return (
     <div className="min-h-screen py-8 px-4 md:px-8">
@@ -157,12 +260,13 @@ export default function Home() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-green-500 rounded-full pulse"></span>
-            <span className="text-sm text-gray-400">Live</span>
+            <span className={`w-2 h-2 rounded-full pulse ${error ? 'bg-yellow-500' : 'bg-green-500'}`}></span>
+            <span className="text-sm text-gray-400">{error ? 'Limited' : 'Live'}</span>
           </div>
         </div>
 
         <SearchBar value={search} onChange={setSearch} />
+        <QuickFilters activeFilter={search} onSelect={setSearch} />
       </header>
 
       {/* Alert Toast */}
@@ -177,18 +281,18 @@ export default function Home() {
         {/* Stats Bar */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           <div className="glass-card p-4 text-center">
-            <p className="text-2xl font-bold text-white">{stories.length}</p>
+            <p className="text-2xl font-bold text-white">{loading ? '...' : stories.length}</p>
             <p className="text-xs text-gray-400">Stories Today</p>
           </div>
           <div className="glass-card p-4 text-center">
             <p className="text-2xl font-bold text-green-400">
-              {stories.filter(s => (s.sentiment || 0) > 0.3).length}
+              {loading ? '...' : stories.filter(s => (s.sentiment || 0) > 0.3).length}
             </p>
             <p className="text-xs text-gray-400">Bullish</p>
           </div>
           <div className="glass-card p-4 text-center">
             <p className="text-2xl font-bold text-red-400">
-              {stories.filter(s => (s.sentiment || 0) < -0.3).length}
+              {loading ? '...' : stories.filter(s => (s.sentiment || 0) < -0.3).length}
             </p>
             <p className="text-xs text-gray-400">Bearish</p>
           </div>
@@ -197,13 +301,27 @@ export default function Home() {
         {/* Stories List */}
         <div className="space-y-4">
           {loading ? (
+            // Loading skeletons (Technical Judge feedback)
+            <>
+              <StoryCardSkeleton />
+              <StoryCardSkeleton />
+              <StoryCardSkeleton />
+            </>
+          ) : error && stories.length === 0 ? (
+            // Error state (Technical Judge feedback)
             <div className="glass-card p-12 text-center">
-              <div className="animate-spin text-4xl mb-4">⚡</div>
-              <p className="text-gray-400">Loading AI ecosystem intelligence...</p>
+              <div className="text-4xl mb-4">⚠️</div>
+              <p className="text-gray-400 mb-4">{error}</p>
+              <button
+                onClick={fetchNews}
+                className="glow-btn py-2 px-6 text-sm"
+              >
+                🔄 Retry
+              </button>
             </div>
           ) : filteredStories.length === 0 ? (
             <div className="glass-card p-12 text-center">
-              <p className="text-gray-400">No stories found for "{search}"</p>
+              <p className="text-gray-400">No stories found for &quot;{search}&quot;</p>
             </div>
           ) : (
             filteredStories.map((story, index) => (
@@ -214,12 +332,23 @@ export default function Home() {
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer with Sponsor Badge (Perplexity strategic recommendation) */}
         <footer className="mt-16 text-center text-gray-500 text-sm">
+          <div className="glass-card p-4 mb-4 inline-block">
+            <p className="text-xs text-gray-400 mb-2">Powered by</p>
+            <div className="flex items-center justify-center gap-6">
+              <div className="text-center">
+                <span className="text-indigo-400 font-semibold">AskNews</span>
+                <p className="text-xs text-gray-500">{stories.length} stories • RAG + Sentiment</p>
+              </div>
+              <div className="w-px h-8 bg-gray-700"></div>
+              <div className="text-center">
+                <span className="text-purple-400 font-semibold">ActivePieces</span>
+                <p className="text-xs text-gray-500">Webhook Alerts</p>
+              </div>
+            </div>
+          </div>
           <p>Built with 💜 at AI Hackday Berlin • Feb 2026</p>
-          <p className="mt-1 text-xs">
-            Powered by <span className="text-indigo-400">AskNews</span> + <span className="text-purple-400">ActivePieces</span>
-          </p>
         </footer>
       </main>
     </div>
