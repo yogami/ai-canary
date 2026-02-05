@@ -274,37 +274,54 @@ ${storySummaries}
 
 ## BRUTAL REALITY CHECK REQUIRED:
 
-Analyze this idea with zero sugar-coating. Be specific about:
-1. Name 2-3 existing solutions that already do this
-2. Estimate how fast a FAANG company could replicate this (hours/days/weeks)
-3. Why this startup will probably fail (be specific)
-4. BUT - what unique angle could save them?
-5. Overall survival probability (be honest)
+Analyze this idea EXHAUSTIVELY. For each point, explain THE UNDERLYING DYNAMICS - don't just state observations, explain WHY the market works this way.
 
-Also provide standard analysis:
-- Market timing (good/neutral/risky)
-- Threats from the news stories
-- Opportunities from the news stories
+Required analysis:
+1. Name 3+ existing solutions with their moats (data, distribution, network effects) and pricing
+2. FAANG threat with economic reasoning - why would/wouldn't they care about this market?
+3. DEEP DIVE on why this will fail:
+   - Unit economics (CAC vs LTV breakdown)
+   - Distribution/GTM challenges
+   - Timing (too early/late?)
+   - Defensibility gaps
+   - Team/expertise requirements
+4. Startup graveyard with ROOT CAUSE analysis of each failure
+5. Survival probability with confidence reasoning
+6. Concrete salvage plan with SPECIFIC pivot suggestions
 
 Format your response as JSON:
 {
   "brutalRealityCheck": {
     "existingSolutions": [
-      {"name": "Existing Product 1", "url": "https://...", "whyBetter": "They already have..."}
+      {"name": "Product", "url": "https://...", "whyBetter": "Their moat is...", "pricing": "$X/mo", "marketPosition": "Leader because..."}
     ],
     "bigFishThreat": {
       "company": "Google/OpenAI/etc",
-      "timeToReplicate": "2 hours / 2 days / 2 weeks",
-      "whyTheyWould": "Because...",
-      "whyTheyMightNot": "Unless..."
+      "timeToReplicate": "X hours/days/weeks",
+      "economicIncentive": "Why they would care about this market",
+      "whyTheyWould": "Strategic reasons...",
+      "whyTheyMightNot": "What might protect you...",
+      "historicalPrecedent": "Similar products they killed/ignored"
     },
-    "startupGraveyard": ["Failed Startup 1 (reason)", "Failed Startup 2 (reason)"],
-    "brutalVerdict": "One savage sentence summary",
-    "survivalProbability": "5%" | "15%" | "35%" | "50%+",
+    "whyThisWillFail": {
+      "unitEconomics": "Detailed CAC vs LTV analysis",
+      "distributionTrap": "How will anyone find this?",
+      "timingProblem": "Too early/late because...",
+      "defensibilityGap": "What stops copying?",
+      "expertiseRequired": "Skills the team would need",
+      "marketSizeReality": "Is TAM actually big enough?"
+    },
+    "startupGraveyard": [
+      {"name": "Failed Startup", "raised": "$Xm", "rootCause": "Deep explanation of why they failed", "lesson": "What to learn from this"}
+    ],
+    "brutalVerdict": "Multi-sentence savage summary explaining the CORE STRUCTURAL PROBLEM with this idea",
+    "survivalProbability": "X%",
+    "confidenceReasoning": "Why this probability based on similar patterns",
     "salvagePlan": {
-      "nichePivot": "Suggested pivot to defensible niche",
-      "unfairAdvantage": "What they'd need to win",
-      "actionableSteps": ["Step 1", "Step 2", "Step 3"]
+      "nichePivot": "Specific underserved segment to target",
+      "unfairAdvantage": "What moat to build and how",
+      "actionableSteps": ["Specific step 1", "Specific step 2", "Specific step 3"],
+      "timelineToValidation": "How long to know if pivot works"
     }
   },
   "threats": [{"storyIndex": 1, "reason": "..."}],
