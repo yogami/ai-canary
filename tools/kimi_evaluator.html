@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kimi K2 Evaluator - Berlin AI Studio</title>
+    <script src="https://js.puter.com/v2/"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #888;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        textarea,
+        select {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 1rem;
+            resize: vertical;
+        }
+
+        textarea {
+            min-height: 200px;
+            font-family: monospace;
+        }
+
+        select {
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .btn {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #output {
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .status.ready {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .status.loading {
+            background: rgba(234, 179, 8, 0.2);
+            color: #eab308;
+        }
+
+        .status.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .model-info {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 0.5rem;
+        }
+
+        .templates {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .template-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .template-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔬 Kimi K2 Evaluator</h1>
+        <p class="subtitle">Free unlimited access via Puter.js • Berlin AI Studio</p>
+
+        <div class="card">
+            <div id="status" class="status ready">● Ready</div>
+
+            <label for="model">Model</label>
+            <select id="model">
+                <option value="kimi-k2">Kimi K2 (Standard)</option>
+                <option value="kimi-k2-thinking">Kimi K2 Thinking (Deep Research)</option>
+                <option value="kimi-k2.5" selected>Kimi K2.5 (Latest - Jan 2026)</option>
+            </select>
+            <p class="model-info">K2.5: 32B activated / 1T total params • Multimodal agentic model</p>
+
+            <label for="prompt">Your Prompt</label>
+            <div class="templates">
+                <button class="template-btn" onclick="loadTemplate('idea')">💡 Idea Validation</button>
+                <button class="template-btn" onclick="loadTemplate('judge')">⚖️ Judge Panel</button>
+                <button class="template-btn" onclick="loadTemplate('research')">🔬 Deep Research</button>
+                <button class="template-btn" onclick="loadTemplate('competitive')">🏁 Competitive Analysis</button>
+            </div>
+            <textarea id="prompt" placeholder="Enter your prompt here..."></textarea>
+
+            <br><br>
+            <button class="btn" id="submit" onclick="runEvaluation()">🚀 Evaluate with Kimi</button>
+        </div>
+
+        <div class="card">
+            <label>Response</label>
+            <div id="output">Response will appear here...</div>
+        </div>
+    </div>
+
+    <script>
+        const TEMPLATES = {
+            idea: `You are a critical startup advisor. Evaluate this idea:
+
+[PASTE YOUR IDEA HERE]
+
+Provide:
+1. Market opportunity score (1-10) with justification
+2. Technical feasibility assessment
+3. Competitive moat analysis
+4. Path to first $10K MRR
+5. Red flags and risks
+6. Recommended next steps (actionable, specific)`,
+
+            judge: `You are a panel of 3 hackathon judges evaluating this project:
+
+[PASTE PROJECT DETAILS HERE]
+
+Respond as:
+## Technical Judge (Score: X/10)
+[Strengths, weaknesses, recommendations]
+
+## UX/Product Judge (Score: X/10)
+[Strengths, weaknesses, recommendations]
+
+## Business/VC Judge (Score: X/10)
+[Strengths, weaknesses, recommendations]`,
+
+            research: `Conduct deep research analysis on this topic:
+
+[PASTE TOPIC HERE]
+
+Provide:
+1. Hidden insights most analyses miss
+2. Second-order effects and implications
+3. Key data points with sources
+4. Contrarian perspectives worth considering
+5. Actionable recommendations`,
+
+            competitive: `Analyze the competitive landscape for:
+
+[PASTE PRODUCT/MARKET HERE]
+
+Include:
+1. Direct competitors (with funding, pricing, positioning)
+2. Indirect competitors and substitutes
+3. Market gaps and opportunities
+4. Recommended differentiation strategy
+5. Warning signs to watch`
+        };
+
+        function loadTemplate(type) {
+            document.getElementById('prompt').value = TEMPLATES[type];
+        }
+
+        // Check if Puter is loaded
+        window.addEventListener('load', async () => {
+            const status = document.getElementById('status');
+            try {
+                // Check if puter is available
+                if (typeof puter === 'undefined') {
+                    status.className = 'status error';
+                    status.innerHTML = '❌ Puter.js failed to load. Check internet connection.';
+                    return;
+                }
+                status.className = 'status ready';
+                status.innerHTML = '● Ready - Click Evaluate to start';
+            } catch (e) {
+                status.className = 'status error';
+                status.innerHTML = '❌ Error loading Puter.js';
+            }
+        });
+
+        async function runEvaluation() {
+            const model = document.getElementById('model').value;
+            const prompt = document.getElementById('prompt').value;
+            const output = document.getElementById('output');
+            const status = document.getElementById('status');
+            const btn = document.getElementById('submit');
+
+            if (!prompt.trim()) {
+                alert('Please enter a prompt');
+                return;
+            }
+
+            // Check if puter is available
+            if (typeof puter === 'undefined') {
+                output.textContent = 'Error: Puter.js not loaded. Please refresh the page.';
+                return;
+            }
+
+            status.className = 'status loading';
+            status.innerHTML = '⏳ Connecting to Puter...';
+            btn.disabled = true;
+            output.textContent = 'Initializing Kimi K2...\n\nNote: First use requires Puter.com login (free). A popup may appear.';
+
+            try {
+                console.log('Starting evaluation with model:', model);
+                console.log('Prompt length:', prompt.length);
+
+                status.innerHTML = '⏳ Sending to Kimi K2...';
+
+                const response = await puter.ai.chat(prompt, {
+                    model: model,
+                    stream: true
+                });
+
+                console.log('Got response object:', response);
+
+                output.textContent = '';
+                status.innerHTML = '⏳ Receiving response...';
+
+                for await (const chunk of response) {
+                    console.log('Chunk:', chunk);
+                    output.textContent += chunk?.text || '';
+                    output.scrollTop = output.scrollHeight;
+                }
+
+                status.className = 'status ready';
+                status.innerHTML = '✅ Complete';
+            } catch (error) {
+                console.error('Evaluation error:', error);
+                status.className = 'status error';
+                status.innerHTML = '❌ Error';
+                output.textContent = `Error: ${error.message || error}\n\n` +
+                    `Troubleshooting:\n` +
+                    `1. Open browser console (Cmd+Option+J) for details\n` +
+                    `2. Try refreshing the page\n` +
+                    `3. Check if popup blocker is preventing Puter login\n` +
+                    `4. Try a different browser (Chrome recommended)`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>

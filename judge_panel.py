@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-AICanary - LLM Judge Panel Evaluation
-Uses frontier models via OpenRouter to simulate hackathon judges.
+AICanary - LLM Judge Panel Evaluation (Phase 2)
+Uses LATEST frontier models via OpenRouter to simulate hackathon judges.
 
 Judges:
-1. Technical Expert (DeepSeek-R1) - Code quality, architecture, integration depth
-2. UX/Product Judge (Claude-3.5-Sonnet) - User experience, problem-solution fit
-3. Business/VC Judge (Gemini-2.0-Flash) - Market potential, scalability, business model
+1. Technical Expert (DeepSeek-R1-0528) - Code quality, architecture, integration depth
+2. UX/Product Judge (Claude-3.5-Sonnet-20241022) - User experience, problem-solution fit
+3. Business/VC Judge (Gemini-2.5-Pro) - Market potential, scalability, business model
+4. Strategic Advisor (Perplexity Sonar Pro) - Real-time market intelligence
 """
 
 import os
@@ -17,14 +18,16 @@ from datetime import datetime
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
 MODELS = {
-    "technical_expert": "deepseek/deepseek-r1",
-    "ux_product_judge": "anthropic/claude-3.5-sonnet",
-    "business_vc_judge": "google/gemini-2.0-flash-001"
+    "technical_expert": "deepseek/deepseek-r1-0528",
+    "ux_product_judge": "anthropic/claude-sonnet-4",
+    "business_vc_judge": "google/gemini-2.5-pro-preview-05-06",
+    "strategic_advisor": "perplexity/sonar-pro",
+    "deep_research": "moonshotai/kimi-k2-instruct"
 }
 
 # AICanary project details for judges to evaluate
 PROJECT_BRIEF = """
-# AICanary - Real-Time AI Ecosystem Intelligence
+# AICanary - Real-Time AI Ecosystem Intelligence (Phase 2)
 
 ## Overview
 AICanary is a real-time monitoring dashboard that alerts AI builders about competitor launches, new models, and market shifts in the AI ecosystem.
@@ -36,15 +39,22 @@ AICanary is a real-time monitoring dashboard that alerts AI builders about compe
 ## Tech Stack
 - Frontend: Next.js 16 + TypeScript + Tailwind CSS
 - APIs: AskNews (real-time AI news intelligence), ActivePieces (automation webhooks)
-- Testing: Playwright E2E (14 tests, all passing)
+- Testing: Playwright E2E (19 tests, all passing)
+- Storage: LocalStorage cache with offline fallback
 
-## Features
+## Features (Phase 2 Complete)
 1. **Real-Time News Feed**: Fetches live AI ecosystem news via AskNews API
 2. **Sentiment Analysis**: Each story has Bullish/Bearish/Neutral badges
-3. **Search Filtering**: Filter stories by keywords
-4. **Alert System**: Click "Alert Me" to queue notifications (ActivePieces webhook ready)
-5. **Coverage Metrics**: Shows story coverage percentage
-6. **Premium UI**: Glassmorphism dark mode with gradient text and animations
+3. **Impact Score Badges**: ⚡ High Impact for stories with strong sentiment*coverage
+4. **Quick Filters**: 5 preset filters (LLMs, GenAI, Funding, Launches, Research)
+5. **Search Filtering**: Filter stories by keywords with special char handling
+6. **Alert System**: Click "Alert Me" to queue notifications (ActivePieces webhook ready)
+7. **Export CSV**: One-click download of filtered stories for team sharing
+8. **Onboarding Tooltip**: First-visit guidance for new users
+9. **Offline Support**: LocalStorage cache with Live/Cached indicator
+10. **Alert History**: Tracks all alerts in localStorage
+11. **Rate Limit Handling**: Graceful 429 error handling for ActivePieces
+12. **Premium UI**: Glassmorphism dark mode with gradient text and animations
 
 ## Hackathon Context
 - Event: AI Hackday Berlin (Feb 5, 2026)
@@ -55,11 +65,16 @@ AICanary is a real-time monitoring dashboard that alerts AI builders about compe
 ## Current Implementation
 - Dashboard loads 10 real stories from AskNews
 - Sentiment badges (🚀 Bullish / 📉 Bearish / ⚖️ Neutral)
+- Impact badges (⚡ High Impact for sentiment*coverage > 0.3)
 - Stats cards showing Stories Today, Bullish count, Bearish count
-- Search filters stories in real-time
-- Alert button triggers toast + demo webhook
+- Quick filter buttons for common AI domains
+- Search filters stories in real-time (handles special chars)
+- Alert button triggers toast + demo webhook + history tracking
+- Export CSV button for filtered stories
+- Onboarding tooltip for first-time visitors
+- Data source indicator (Live/Cached)
 - Mobile responsive design
-- E2E tests cover happy paths, edge cases, and API integration
+- 19 E2E tests cover happy paths, edge cases, and API integration
 """
 
 JUDGING_CRITERIA = """
@@ -244,9 +259,90 @@ Focus on:
 
     return call_openrouter(MODELS["business_vc_judge"], system_prompt, user_prompt)
 
+def get_strategic_advisor_review() -> str:
+    """Perplexity Sonar Pro as Strategic Market Advisor."""
+    system_prompt = """You are a Strategic Market Intelligence Advisor with access to real-time market data.
+    
+Your role: Provide actionable strategic insights based on current market conditions and competitive landscape.
+
+Be SPECIFIC and DATA-DRIVEN. Reference real companies, funding rounds, and market trends.
+
+Format your response as:
+## Strategic Intelligence Score: X/10
+
+### Market Timing Assessment
+- (is now the right time for this product?)
+
+### Competitive Landscape (Real Companies)
+- (list actual competitors and their positioning)
+
+### Differentiation Opportunities
+- (specific ways to stand out in the market)
+
+### Go-to-Market Strategy
+- (actionable GTM recommendations)
+
+### Revenue Potential Analysis
+- (realistic revenue projection for first year)
+"""
+
+    user_prompt = f"""Analyze this hackathon project for strategic market opportunity:
+
+{PROJECT_BRIEF}
+
+Focus on:
+1. What real companies compete in this space?
+2. What's the current funding climate for AI tools?
+3. What would make this a must-have vs nice-to-have?
+4. What's the fastest path to $10K MRR?"""
+
+    return call_openrouter(MODELS["strategic_advisor"], system_prompt, user_prompt)
+
+def get_deep_research_review() -> str:
+    """Kimi K2 as Deep Research Analyst."""
+    system_prompt = """You are a Deep Research Analyst with exceptional ability to synthesize complex information.
+    
+Your role: Conduct thorough analysis of the product, market, and technical implementation to identify non-obvious insights.
+
+Be COMPREHENSIVE and INSIGHTFUL. Look for patterns others miss.
+
+Format your response as:
+## Deep Research Score: X/10
+
+### Hidden Strengths
+- (non-obvious advantages of this approach)
+
+### Overlooked Risks
+- (risks that typical analysis would miss)
+
+### Technical Deep Dive
+- (analysis of architectural decisions and their implications)
+
+### Market Signal Analysis
+- (what signals suggest success or failure?)
+
+### Unconventional Recommendations
+- (advice that goes against common wisdom but could be game-changing)
+"""
+
+    user_prompt = f"""Conduct deep research analysis on this hackathon project:
+
+{PROJECT_BRIEF}
+
+{JUDGING_CRITERIA}
+
+Go beyond surface-level analysis. Look for:
+1. Second-order effects of the technical choices
+2. Hidden dependencies or risks
+3. Underutilized opportunities in the current implementation
+4. What the demographic data suggests about the target market"""
+
+    return call_openrouter(MODELS["deep_research"], system_prompt, user_prompt)
+
 def main():
     print("=" * 60)
-    print("AICanary - LLM Judge Panel Evaluation")
+    print("AICanary - LLM Judge Panel Evaluation (Phase 2)")
+    print("Using LATEST frontier models via OpenRouter")
     print(f"Timestamp: {datetime.now().isoformat()}")
     print("=" * 60)
     
@@ -256,37 +352,55 @@ def main():
     
     results = {}
     
-    # Technical Expert (DeepSeek-R1)
-    print("\n🔧 Consulting Technical Expert (DeepSeek-R1)...")
+    # Technical Expert (DeepSeek-R1-0528)
+    print("\n🔧 Consulting Technical Expert (DeepSeek-R1-0528)...")
     results["technical"] = get_technical_expert_review()
     print(results["technical"])
     
-    # UX/Product Judge (Claude)
-    print("\n🎨 Consulting UX/Product Judge (Claude-3.5-Sonnet)...")
+    # UX/Product Judge (Claude Sonnet 4)
+    print("\n🎨 Consulting UX/Product Judge (Claude Sonnet 4)...")
     results["ux_product"] = get_ux_product_review()
     print(results["ux_product"])
     
-    # Business/VC Judge (Gemini)
-    print("\n💰 Consulting Business/VC Judge (Gemini-2.0-Flash)...")
+    # Business/VC Judge (Gemini 2.5 Pro)
+    print("\n💰 Consulting Business/VC Judge (Gemini 2.5 Pro)...")
     results["business"] = get_business_vc_review()
     print(results["business"])
+    
+    # Strategic Advisor (Perplexity Sonar Pro)
+    print("\n🌐 Consulting Strategic Advisor (Perplexity Sonar Pro)...")
+    results["strategic"] = get_strategic_advisor_review()
+    print(results["strategic"])
+    
+    # Deep Research Analyst (Kimi K2)
+    print("\n🔬 Consulting Deep Research Analyst (Kimi K2)...")
+    results["deep_research"] = get_deep_research_review()
+    print(results["deep_research"])
     
     # Save results
     output_path = "/Users/user1000/gitprojects/ai-canary/JUDGE_PANEL_RESULTS.md"
     with open(output_path, "w") as f:
-        f.write("# AICanary - LLM Judge Panel Evaluation\n\n")
+        f.write("# AICanary - LLM Judge Panel Evaluation (Phase 2)\n\n")
         f.write(f"**Evaluated at**: {datetime.now().isoformat()}\n\n")
+        f.write("**Models Used**: DeepSeek-R1-0528, Claude Sonnet 4, Gemini 2.5 Pro, Perplexity Sonar Pro, Kimi K2\n\n")
         f.write("---\n\n")
-        f.write("## 🔧 Technical Expert (DeepSeek-R1)\n\n")
+        f.write("## 🔧 Technical Expert (DeepSeek-R1-0528)\n\n")
         f.write(results["technical"])
         f.write("\n\n---\n\n")
-        f.write("## 🎨 UX/Product Judge (Claude-3.5-Sonnet)\n\n")
+        f.write("## 🎨 UX/Product Judge (Claude Sonnet 4)\n\n")
         f.write(results["ux_product"])
         f.write("\n\n---\n\n")
-        f.write("## 💰 Business/VC Judge (Gemini-2.0-Flash)\n\n")
+        f.write("## 💰 Business/VC Judge (Gemini 2.5 Pro)\n\n")
         f.write(results["business"])
+        f.write("\n\n---\n\n")
+        f.write("## 🌐 Strategic Advisor (Perplexity Sonar Pro)\n\n")
+        f.write(results["strategic"])
+        f.write("\n\n---\n\n")
+        f.write("## 🔬 Deep Research Analyst (Kimi K2)\n\n")
+        f.write(results["deep_research"])
     
     print(f"\n✅ Results saved to: {output_path}")
 
 if __name__ == "__main__":
     main()
+

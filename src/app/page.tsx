@@ -6,8 +6,11 @@ import {
   setCachedStories,
   addAlertToHistory,
   isOnboardingDone,
-  markOnboardingDone
+  markOnboardingDone,
+  getWatchlist,
+  addToWatchlist
 } from '@/lib/cache';
+import ValidatorPanel from '@/components/ValidatorPanel';
 
 interface Story {
   uuid: string;
@@ -177,6 +180,14 @@ function QuickFilters({ activeFilter, onSelect }: { activeFilter: string; onSele
   );
 }
 
+type SourceType = 'asknews' | 'hackernews' | 'github';
+
+const SOURCE_TABS = [
+  { id: 'asknews' as SourceType, label: '📰 AskNews', description: 'Real-time AI news' },
+  { id: 'hackernews' as SourceType, label: '🟠 HackerNews', description: 'Tech community' },
+  { id: 'github' as SourceType, label: '🐙 GitHub', description: 'Trending repos' },
+];
+
 export default function Home() {
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
@@ -185,20 +196,34 @@ export default function Home() {
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [dataSource, setDataSource] = useState<'live' | 'cached'>('live');
+  const [activeSource, setActiveSource] = useState<SourceType>('asknews');
+  const [validatorKeywords, setValidatorKeywords] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchNews();
+    fetchNews(activeSource);
     // Check onboarding on client side
     if (typeof window !== 'undefined' && !isOnboardingDone()) {
       setShowOnboarding(true);
     }
-  }, []);
+  }, [activeSource]);
 
-  const fetchNews = async () => {
+  const handleSourceChange = (source: SourceType) => {
+    setActiveSource(source);
+    setStories([]);
+    setLoading(true);
+  };
+
+  const fetchNews = async (source: SourceType = 'asknews') => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('/api/news');
+
+      // Choose endpoint based on source
+      const endpoint = source === 'asknews' ? '/api/news'
+        : source === 'hackernews' ? '/api/hackernews'
+          : '/api/github';
+
+      const res = await fetch(endpoint);
 
       if (!res.ok) {
         throw new Error(`API error: ${res.status}`);
@@ -390,6 +415,35 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Source Tabs */}
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+          {SOURCE_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleSourceChange(tab.id)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${activeSource === tab.id
+                ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Project Validator Panel */}
+        <ValidatorPanel
+          stories={stories.map(s => ({
+            id: s.uuid,
+            headline: s.headline,
+            summary: s.summary,
+            sentiment: (s.sentiment || 0) > 0.3 ? 'positive' : (s.sentiment || 0) < -0.3 ? 'negative' : 'neutral',
+            sentimentScore: s.sentiment,
+            coverage: s.coverage
+          }))}
+          onFilter={(keywords) => setValidatorKeywords(keywords)}
+        />
+
         {/* Stories List */}
         <div className="space-y-4">
           {loading ? (
@@ -405,7 +459,7 @@ export default function Home() {
               <div className="text-4xl mb-4">⚠️</div>
               <p className="text-gray-400 mb-4">{error}</p>
               <button
-                onClick={fetchNews}
+                onClick={() => fetchNews(activeSource)}
                 className="glow-btn py-2 px-6 text-sm"
               >
                 🔄 Retry

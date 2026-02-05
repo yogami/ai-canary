@@ -179,7 +179,7 @@ test.describe('AICanary Dashboard', () => {
 
             // Verify footer content
             await expect(page.locator('text=AI Hackday Berlin')).toBeVisible();
-            await expect(page.locator('text=AskNews')).toBeVisible();
+            await expect(page.locator('footer >> text=AskNews')).toBeVisible();
             await expect(page.locator('text=ActivePieces')).toBeVisible();
         });
 

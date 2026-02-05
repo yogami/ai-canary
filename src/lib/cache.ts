@@ -134,3 +134,66 @@ export function markOnboardingDone(): void {
     if (typeof window === 'undefined') return;
     localStorage.setItem(ONBOARDING_KEY, 'true');
 }
+
+// Watchlist storage for competitor tracking
+const WATCHLIST_KEY = 'aicanary_watchlist';
+
+export interface WatchlistItem {
+    keyword: string;
+    addedAt: string;
+}
+
+export function getWatchlist(): WatchlistItem[] {
+    if (typeof window === 'undefined') return [];
+
+    try {
+        const watchlist = localStorage.getItem(WATCHLIST_KEY);
+        return watchlist ? JSON.parse(watchlist) : [];
+    } catch {
+        return [];
+    }
+}
+
+export function addToWatchlist(keyword: string): void {
+    if (typeof window === 'undefined') return;
+
+    try {
+        const watchlist = getWatchlist();
+        if (!watchlist.some(item => item.keyword.toLowerCase() === keyword.toLowerCase())) {
+            watchlist.push({ keyword, addedAt: new Date().toISOString() });
+            localStorage.setItem(WATCHLIST_KEY, JSON.stringify(watchlist));
+        }
+    } catch (error) {
+        console.warn('Failed to add to watchlist:', error);
+    }
+}
+
+export function removeFromWatchlist(keyword: string): void {
+    if (typeof window === 'undefined') return;
+
+    try {
+        const watchlist = getWatchlist().filter(
+            item => item.keyword.toLowerCase() !== keyword.toLowerCase()
+        );
+        localStorage.setItem(WATCHLIST_KEY, JSON.stringify(watchlist));
+    } catch (error) {
+        console.warn('Failed to remove from watchlist:', error);
+    }
+}
+
+export function isInWatchlist(keyword: string): boolean {
+    return getWatchlist().some(item => item.keyword.toLowerCase() === keyword.toLowerCase());
+}
+
+// Project description storage
+const PROJECT_KEY = 'aicanary_project';
+
+export function getStoredProject(): string {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem(PROJECT_KEY) || '';
+}
+
+export function setStoredProject(description: string): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(PROJECT_KEY, description);
+}
