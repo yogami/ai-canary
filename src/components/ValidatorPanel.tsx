@@ -25,7 +25,6 @@ interface AnalysisResult {
     recommendation: string;
 }
 
-type InputMethod = 'description' | 'url' | 'github' | 'file';
 type Niche = 'technology' | 'ai' | 'media' | 'film' | 'music' | 'gaming' | 'fintech' | 'healthcare' | 'climate';
 
 const NICHES: { id: Niche; label: string; icon: string }[] = [
@@ -39,33 +38,112 @@ const NICHES: { id: Niche; label: string; icon: string }[] = [
 ];
 
 export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProps) {
-    const [inputMethod, setInputMethod] = useState<InputMethod>('description');
     const [selectedNiche, setSelectedNiche] = useState<Niche>('ai');
     const [projectDescription, setProjectDescription] = useState('');
     const [appUrl, setAppUrl] = useState('');
     const [githubUrl, setGithubUrl] = useState('');
+    const [targetAudience, setTargetAudience] = useState('');
+    const [competitors, setCompetitors] = useState('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [projectInfo, setProjectInfo] = useState<{
-        title?: string;
-        description?: string;
-        topics?: string[];
-    } | null>(null);
+    const [extractedInfo, setExtractedInfo] = useState<{
+        urlData?: { title: string; description: string };
+        githubData?: { name: string; description: string; topics: string[] };
+    }>({});
     const [intelligentResults, setIntelligentResults] = useState<AnalysisResult | null>(null);
     const [analysisSource, setAnalysisSource] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+    const [uploadedContent, setUploadedContent] = useState<string>('');
 
-    // Run intelligent LLM analysis
-    const runIntelligentAnalysis = async (description: string) => {
+    // Fetch URL metadata
+    const fetchUrlMetadata = async (url: string) => {
+        if (!url.trim()) return null;
+        try {
+            const res = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
+            return await res.json();
+        } catch {
+            return null;
+        }
+    };
+
+    // Fetch GitHub metadata
+    const fetchGitHubMetadata = async (url: string) => {
+        if (!url.trim()) return null;
+        try {
+            const res = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ githubUrl: url })
+            });
+            return await res.json();
+        } catch {
+            return null;
+        }
+    };
+
+    // Run the full analysis
+    const runAnalysis = async () => {
+        if (!projectDescription.trim() && !appUrl.trim() && !githubUrl.trim() && !uploadedContent) {
+            setError('Please provide at least a project description, URL, or GitHub repo');
+            return;
+        }
+
         setIsAnalyzing(true);
         setError(null);
 
         try {
+            // Fetch metadata from URLs in parallel
+            const [urlData, githubData] = await Promise.all([
+                appUrl ? fetchUrlMetadata(appUrl) : null,
+                githubUrl ? fetchGitHubMetadata(githubUrl) : null
+            ]);
+
+            // Store extracted info for display
+            setExtractedInfo({
+                urlData: urlData?.title ? urlData : undefined,
+                githubData: githubData?.name ? githubData : undefined
+            });
+
+            // Build comprehensive description for LLM
+            let fullDescription = projectDescription;
+
+            if (urlData?.title) {
+                fullDescription += `\n\nApp/Website: ${urlData.title}. ${urlData.description || ''}`;
+            }
+
+            if (githubData?.name) {
+                fullDescription += `\n\nGitHub: ${githubData.name}. ${githubData.description || ''}`;
+                if (githubData.topics?.length) {
+                    fullDescription += ` Topics: ${githubData.topics.join(', ')}.`;
+                }
+                if (githubData.readme) {
+                    fullDescription += ` README: ${githubData.readme.slice(0, 500)}`;
+                }
+            }
+
+            if (uploadedContent) {
+                fullDescription += `\n\nUploaded Documentation:\n${uploadedContent.slice(0, 2000)}`;
+            }
+
+            if (targetAudience) {
+                fullDescription += `\n\nTarget Audience: ${targetAudience}`;
+            }
+
+            if (competitors) {
+                fullDescription += `\n\nKnown Competitors: ${competitors}`;
+            }
+
+            // Call intelligent analysis API
             const res = await fetch('/api/intelligent-analysis', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    projectDescription: description,
+                    projectDescription: fullDescription,
                     stories: stories.map(s => ({
                         headline: s.headline,
                         summary: s.summary,
@@ -86,7 +164,6 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                 setIntelligentResults(data.analysis);
                 setAnalysisSource(data.source || 'unknown');
 
-                // Extract keywords from market gaps for filtering
                 const keywords = data.analysis.marketGaps?.flatMap((gap: string) =>
                     gap.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3)
                 ) || [];
@@ -100,93 +177,19 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
         }
     };
 
-    const analyzeDescription = () => {
-        if (!projectDescription.trim()) return;
-        runIntelligentAnalysis(projectDescription);
-    };
-
-    const analyzeUrl = async () => {
-        if (!appUrl.trim()) return;
-        setIsAnalyzing(true);
-        setError(null);
-        try {
-            const res = await fetch('/api/analyze', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: appUrl })
-            });
-            const data = await res.json();
-            setProjectInfo({ title: data.title, description: data.description });
-
-            // Now run intelligent analysis with extracted content
-            const fullDescription = `${data.title || ''} ${data.description || ''} ${(data.keywords || []).join(' ')}`;
-            await runIntelligentAnalysis(fullDescription);
-        } catch (err) {
-            console.error('URL analysis failed:', err);
-            setError('Failed to analyze URL');
-        } finally {
-            setIsAnalyzing(false);
-        }
-    };
-
-    const analyzeGithub = async () => {
-        if (!githubUrl.trim()) return;
-        setIsAnalyzing(true);
-        setError(null);
-        try {
-            const res = await fetch('/api/analyze', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ githubUrl })
-            });
-            const data = await res.json();
-            setProjectInfo({
-                title: data.name,
-                description: data.description,
-                topics: data.topics
-            });
-
-            // Build rich description from GitHub data
-            const fullDescription = `${data.name || ''}: ${data.description || ''} Topics: ${(data.topics || []).join(', ')} README excerpt: ${data.readme || ''}`;
-            await runIntelligentAnalysis(fullDescription);
-        } catch (err) {
-            console.error('GitHub analysis failed:', err);
-            setError('Failed to analyze GitHub repo');
-        } finally {
-            setIsAnalyzing(false);
-        }
-    };
-
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
-        setIsAnalyzing(true);
-        setError(null);
-        try {
-            const content = await file.text();
-            setProjectInfo({ title: file.name, description: content.slice(0, 200) });
-            await runIntelligentAnalysis(content);
-        } catch (err) {
-            console.error('File analysis failed:', err);
-            setError('Failed to analyze file');
-        } finally {
-            setIsAnalyzing(false);
-        }
+        const content = await file.text();
+        setUploadedFileName(file.name);
+        setUploadedContent(content);
     };
-
-    const inputMethods = [
-        { id: 'description' as InputMethod, label: '✏️ Description', icon: '✏️' },
-        { id: 'url' as InputMethod, label: '🌐 App URL', icon: '🌐' },
-        { id: 'github' as InputMethod, label: '🐙 GitHub', icon: '🐙' },
-        { id: 'file' as InputMethod, label: '📄 Upload', icon: '📄' },
-    ];
 
     const getTimingColor = (timing: string) => {
         switch (timing) {
-            case 'good': return 'text-green-400 bg-green-500/20';
-            case 'risky': return 'text-red-400 bg-red-500/20';
-            default: return 'text-yellow-400 bg-yellow-500/20';
+            case 'good': return 'text-green-400 bg-green-500/20 border-green-500/30';
+            case 'risky': return 'text-red-400 bg-red-500/20 border-red-500/30';
+            default: return 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30';
         }
     };
 
@@ -202,8 +205,8 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
             </h2>
 
             {/* Niche Selector */}
-            <div className="mb-4">
-                <label className="text-sm text-gray-400 mb-2 block">Select Your Niche:</label>
+            <div className="mb-5">
+                <label className="text-sm text-gray-400 mb-2 block">Industry/Niche:</label>
                 <div className="flex flex-wrap gap-2">
                     {NICHES.map((niche) => (
                         <button
@@ -220,116 +223,108 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                 </div>
             </div>
 
-            {/* Input Method Tabs */}
-            <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-                {inputMethods.map((method) => (
-                    <button
-                        key={method.id}
-                        onClick={() => setInputMethod(method.id)}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${inputMethod === method.id
-                                ? 'bg-purple-500/30 text-purple-300 border border-purple-500/50'
-                                : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-transparent'
-                            }`}
-                    >
-                        {method.label}
-                    </button>
-                ))}
-            </div>
-
+            {/* All Input Fields */}
             <div className="space-y-4">
-                {/* Description Input */}
-                {inputMethod === 'description' && (
-                    <div>
-                        <label className="text-sm text-gray-400 mb-2 block">
-                            Describe your project (LLM will understand semantically)
-                        </label>
-                        <textarea
-                            value={projectDescription}
-                            onChange={(e) => setProjectDescription(e.target.value)}
-                            placeholder="e.g., A smartphone-based stormwater mapping tool using GPS and IMU sensor fusion..."
-                            className="w-full bg-black/30 border border-white/20 rounded-xl p-4 text-white placeholder:text-gray-500 resize-none h-32 focus:outline-none focus:border-purple-500/50"
-                        />
-                        <button
-                            onClick={analyzeDescription}
-                            disabled={isAnalyzing || !projectDescription.trim()}
-                            className="w-full mt-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl transition-all"
-                        >
-                            {isAnalyzing ? '🧠 AI Analyzing...' : '🔍 Analyze with AI'}
-                        </button>
-                    </div>
-                )}
+                {/* Project Description - Required */}
+                <div>
+                    <label className="text-sm text-gray-400 mb-2 block">
+                        📝 Project Description <span className="text-purple-400">*</span>
+                    </label>
+                    <textarea
+                        value={projectDescription}
+                        onChange={(e) => setProjectDescription(e.target.value)}
+                        placeholder="Describe your project, product, or idea in detail. The more context, the better the analysis..."
+                        className="w-full bg-black/30 border border-white/20 rounded-xl p-4 text-white placeholder:text-gray-500 resize-none h-28 focus:outline-none focus:border-purple-500/50"
+                    />
+                </div>
 
-                {/* URL Input */}
-                {inputMethod === 'url' && (
+                {/* Two-column grid for optional fields */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* App URL */}
                     <div>
                         <label className="text-sm text-gray-400 mb-2 block">
-                            Enter your app or landing page URL
+                            🌐 App/Website URL <span className="text-gray-500">(optional)</span>
                         </label>
                         <input
                             type="url"
                             value={appUrl}
                             onChange={(e) => setAppUrl(e.target.value)}
                             placeholder="https://your-app.com"
-                            className="w-full bg-black/30 border border-white/20 rounded-xl p-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500/50"
+                            className="w-full bg-black/30 border border-white/20 rounded-xl p-3 text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500/50"
                         />
-                        <button
-                            onClick={analyzeUrl}
-                            disabled={isAnalyzing || !appUrl.trim()}
-                            className="w-full mt-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl transition-all"
-                        >
-                            {isAnalyzing ? '🧠 AI Analyzing...' : '🌐 Analyze URL'}
-                        </button>
                     </div>
-                )}
 
-                {/* GitHub Input */}
-                {inputMethod === 'github' && (
+                    {/* GitHub URL */}
                     <div>
                         <label className="text-sm text-gray-400 mb-2 block">
-                            Enter your GitHub repository URL
+                            🐙 GitHub Repo URL <span className="text-gray-500">(optional)</span>
                         </label>
                         <input
                             type="url"
                             value={githubUrl}
                             onChange={(e) => setGithubUrl(e.target.value)}
-                            placeholder="https://github.com/username/repo"
-                            className="w-full bg-black/30 border border-white/20 rounded-xl p-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500/50"
+                            placeholder="https://github.com/user/repo"
+                            className="w-full bg-black/30 border border-white/20 rounded-xl p-3 text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500/50"
                         />
-                        <p className="text-xs text-gray-500 mt-1">
-                            We&apos;ll analyze your README, description, and topics with AI
-                        </p>
-                        <button
-                            onClick={analyzeGithub}
-                            disabled={isAnalyzing || !githubUrl.trim()}
-                            className="w-full mt-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl transition-all"
-                        >
-                            {isAnalyzing ? '🧠 AI Analyzing...' : '🐙 Analyze GitHub Repo'}
-                        </button>
                     </div>
-                )}
 
-                {/* File Upload */}
-                {inputMethod === 'file' && (
+                    {/* Target Audience */}
                     <div>
                         <label className="text-sm text-gray-400 mb-2 block">
-                            Upload your README, pitch deck, or documentation
+                            👥 Target Audience <span className="text-gray-500">(optional)</span>
                         </label>
                         <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handleFileUpload}
-                            accept=".md,.txt,.pdf,.doc,.docx"
-                            className="hidden"
+                            type="text"
+                            value={targetAudience}
+                            onChange={(e) => setTargetAudience(e.target.value)}
+                            placeholder="e.g., CTOs at mid-size companies, indie game developers"
+                            className="w-full bg-black/30 border border-white/20 rounded-xl p-3 text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500/50"
                         />
-                        <button
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={isAnalyzing}
-                            className="w-full bg-black/30 border-2 border-dashed border-white/20 rounded-xl p-8 text-gray-400 hover:border-purple-500/50 hover:text-purple-300 transition-all"
-                        >
-                            {isAnalyzing ? '🧠 AI Processing...' : '📄 Click to upload file (.md, .txt, .pdf)'}
-                        </button>
                     </div>
-                )}
+
+                    {/* Known Competitors */}
+                    <div>
+                        <label className="text-sm text-gray-400 mb-2 block">
+                            ⚔️ Known Competitors <span className="text-gray-500">(optional)</span>
+                        </label>
+                        <input
+                            type="text"
+                            value={competitors}
+                            onChange={(e) => setCompetitors(e.target.value)}
+                            placeholder="e.g., Notion, Coda, Roam Research"
+                            className="w-full bg-black/30 border border-white/20 rounded-xl p-3 text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-500/50"
+                        />
+                    </div>
+                </div>
+
+                {/* File Upload */}
+                <div>
+                    <label className="text-sm text-gray-400 mb-2 block">
+                        📄 Documentation/Pitch Deck <span className="text-gray-500">(optional)</span>
+                    </label>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileUpload}
+                        accept=".md,.txt,.pdf,.doc,.docx"
+                        className="hidden"
+                    />
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full bg-black/30 border border-dashed border-white/20 rounded-xl p-4 text-gray-400 hover:border-purple-500/50 hover:text-purple-300 transition-all text-sm"
+                    >
+                        {uploadedFileName ? `📎 ${uploadedFileName}` : '📤 Click to upload README, pitch deck, or docs'}
+                    </button>
+                </div>
+
+                {/* Analyze Button */}
+                <button
+                    onClick={runAnalysis}
+                    disabled={isAnalyzing || (!projectDescription.trim() && !appUrl.trim() && !githubUrl.trim() && !uploadedContent)}
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-all text-lg"
+                >
+                    {isAnalyzing ? '🧠 AI Analyzing Your Project...' : '🔍 Validate My Idea'}
+                </button>
 
                 {/* Error Display */}
                 {error && (
@@ -338,31 +333,41 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                     </div>
                 )}
 
-                {/* Project Info (from URL/GitHub) */}
-                {projectInfo && (
+                {/* Extracted Info */}
+                {(extractedInfo.urlData || extractedInfo.githubData) && (
                     <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-                        <h3 className="text-blue-400 font-semibold mb-2">📋 Detected Project</h3>
-                        {projectInfo.title && <p className="text-white font-medium">{projectInfo.title}</p>}
-                        {projectInfo.description && <p className="text-gray-400 text-sm mt-1">{projectInfo.description.slice(0, 150)}...</p>}
-                        {projectInfo.topics && projectInfo.topics.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                                {projectInfo.topics.map(topic => (
-                                    <span key={topic} className="text-xs bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full">
-                                        {topic}
-                                    </span>
-                                ))}
+                        <h3 className="text-blue-400 font-semibold mb-2">📋 Extracted Context</h3>
+                        {extractedInfo.urlData && (
+                            <div className="mb-2">
+                                <p className="text-white text-sm font-medium">🌐 {extractedInfo.urlData.title}</p>
+                                <p className="text-gray-400 text-xs">{extractedInfo.urlData.description?.slice(0, 100)}</p>
+                            </div>
+                        )}
+                        {extractedInfo.githubData && (
+                            <div>
+                                <p className="text-white text-sm font-medium">🐙 {extractedInfo.githubData.name}</p>
+                                <p className="text-gray-400 text-xs">{extractedInfo.githubData.description}</p>
+                                {extractedInfo.githubData.topics?.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {extractedInfo.githubData.topics.slice(0, 5).map(topic => (
+                                            <span key={topic} className="text-xs bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full">
+                                                {topic}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
                 )}
 
-                {/* Intelligent Analysis Results */}
+                {/* Analysis Results */}
                 {intelligentResults && (
                     <div className="mt-4 space-y-4">
                         {/* Timing Assessment */}
                         <div className={`rounded-xl p-4 border ${getTimingColor(intelligentResults.timing)}`}>
                             <h3 className="font-semibold mb-2 flex items-center gap-2">
-                                ⏰ Market Timing: <span className="uppercase">{intelligentResults.timing}</span>
+                                ⏰ Market Timing: <span className="uppercase font-bold">{intelligentResults.timing}</span>
                             </h3>
                             <p className="text-sm text-gray-300">{intelligentResults.timingReason}</p>
                         </div>
@@ -374,9 +379,9 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                         </div>
 
                         {/* Market Gaps */}
-                        {intelligentResults.marketGaps && intelligentResults.marketGaps.length > 0 && (
+                        {intelligentResults.marketGaps?.length > 0 && !intelligentResults.marketGaps[0].includes('GROQ_API_KEY') && (
                             <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4">
-                                <h3 className="text-purple-400 font-semibold mb-2">🎯 Market Gaps Your Project Fills</h3>
+                                <h3 className="text-purple-400 font-semibold mb-2">🎯 Market Gaps You Can Fill</h3>
                                 <ul className="space-y-1">
                                     {intelligentResults.marketGaps.map((gap, idx) => (
                                         <li key={idx} className="text-sm text-gray-300">• {gap}</li>
@@ -386,7 +391,7 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                         )}
 
                         {/* Threats */}
-                        {intelligentResults.threats && intelligentResults.threats.length > 0 && (
+                        {intelligentResults.threats?.length > 0 && (
                             <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
                                 <h3 className="text-red-400 font-semibold mb-2">
                                     ⚠️ Threats ({intelligentResults.threats.length})
@@ -403,7 +408,7 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                         )}
 
                         {/* Opportunities */}
-                        {intelligentResults.opportunities && intelligentResults.opportunities.length > 0 && (
+                        {intelligentResults.opportunities?.length > 0 && (
                             <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
                                 <h3 className="text-green-400 font-semibold mb-2">
                                     💡 Opportunities ({intelligentResults.opportunities.length})
