@@ -38,3 +38,10 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Agent files - created by git hooks, break Docker builds
+**/.agent_rules.md
+**/.agent_catalog.md
+**/.clinerules
+**/.cursorrules
+**/.windsurfrules
