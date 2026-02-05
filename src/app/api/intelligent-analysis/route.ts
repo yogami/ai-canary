@@ -277,20 +277,39 @@ ${storySummaries}
 Analyze this idea EXHAUSTIVELY. For each point, explain THE UNDERLYING DYNAMICS - don't just state observations, explain WHY the market works this way.
 
 Required analysis:
-1. Name 3+ existing solutions with their moats (data, distribution, network effects) and pricing
-2. FAANG threat with economic reasoning - why would/wouldn't they care about this market?
-3. DEEP DIVE on why this will fail:
-   - Unit economics (CAC vs LTV breakdown)
-   - Distribution/GTM challenges
-   - Timing (too early/late?)
-   - Defensibility gaps
-   - Team/expertise requirements
-4. Startup graveyard with ROOT CAUSE analysis of each failure
-5. Survival probability with confidence reasoning
-6. Concrete salvage plan with SPECIFIC pivot suggestions
+1. **CANARY SCORE** (0-1000): Calculate a health score like CB Insights Mosaic, with 4 factors:
+   - Growth Potential (0-500): Market momentum, trend alignment, news sentiment
+   - Competitive Density (0-200): How crowded, how strong are moats
+   - Timing Signal (0-150): Too early, just right, or too late
+   - Defensibility (0-150): Can this build a moat?
+2. Name 3+ existing solutions with their moats and pricing
+3. FAANG threat with economic reasoning
+4. DEEP DIVE on why this will fail (unit economics, distribution, timing, defensibility)
+5. **SWOT ANALYSIS**: Strengths, Weaknesses, Opportunities, Threats
+6. Startup graveyard with ROOT CAUSE analysis
+7. Survival probability with confidence reasoning
+8. Concrete salvage plan with SPECIFIC pivot suggestions
 
 Format your response as JSON:
 {
+  "canaryScore": {
+    "total": 0-1000,
+    "grade": "A|B|C|D|F",
+    "factors": {
+      "growthPotential": {"score": 0-500, "reasoning": "Why this score based on market signals"},
+      "competitiveDensity": {"score": 0-200, "reasoning": "How crowded and moated is this space"},
+      "timingSignal": {"score": 0-150, "reasoning": "Market timing assessment"},
+      "defensibility": {"score": 0-150, "reasoning": "Can they build a moat?"}
+    },
+    "percentile": "Top X% of ideas analyzed",
+    "verdict": "One-line score interpretation"
+  },
+  "swotAnalysis": {
+    "strengths": ["What unique advantages does this idea have?"],
+    "weaknesses": ["Internal factors that could cause failure"],
+    "opportunities": ["External factors they could capitalize on"],
+    "threats": ["External factors that could kill them"]
+  },
   "brutalRealityCheck": {
     "existingSolutions": [
       {"name": "Product", "url": "https://...", "whyBetter": "Their moat is...", "pricing": "$X/mo", "marketPosition": "Leader because..."}

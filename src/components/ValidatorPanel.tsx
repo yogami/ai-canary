@@ -26,21 +26,55 @@ interface ProducerEvaluation {
     relevantStories: number[];
 }
 
+// CB Insights-inspired Canary Score (0-1000)
+interface CanaryScore {
+    total: number;
+    grade: 'A' | 'B' | 'C' | 'D' | 'F';
+    factors: {
+        growthPotential: { score: number; reasoning: string };
+        competitiveDensity: { score: number; reasoning: string };
+        timingSignal: { score: number; reasoning: string };
+        defensibility: { score: number; reasoning: string };
+    };
+    percentile: string;
+    verdict: string;
+}
+
+// SWOT Analysis
+interface SwotAnalysis {
+    strengths: string[];
+    weaknesses: string[];
+    opportunities: string[];
+    threats: string[];
+}
+
 interface BrutalRealityCheck {
-    existingSolutions: Array<{ name: string; url?: string; whyBetter: string }>;
+    existingSolutions: Array<{ name: string; url?: string; whyBetter: string; pricing?: string; marketPosition?: string }>;
     bigFishThreat: {
         company: string;
         timeToReplicate: string;
         whyTheyWould: string;
         whyTheyMightNot: string;
+        economicIncentive?: string;
+        historicalPrecedent?: string;
     };
-    startupGraveyard: string[];
+    whyThisWillFail?: {
+        unitEconomics: string;
+        distributionTrap: string;
+        timingProblem: string;
+        defensibilityGap: string;
+        expertiseRequired: string;
+        marketSizeReality: string;
+    };
+    startupGraveyard: string[] | Array<{ name: string; raised?: string; rootCause: string; lesson?: string }>;
     brutalVerdict: string;
     survivalProbability: string;
+    confidenceReasoning?: string;
     salvagePlan: {
         nichePivot: string;
         unfairAdvantage: string;
         actionableSteps: string[];
+        timelineToValidation?: string;
     };
 }
 
@@ -51,6 +85,9 @@ interface AnalysisResult {
     timing: 'good' | 'neutral' | 'risky';
     timingReason: string;
     recommendation: string;
+    // CB Insights-inspired features
+    canaryScore?: CanaryScore;
+    swotAnalysis?: SwotAnalysis;
     // Producer Panel (Film/TV only)
     producerPanel?: ProducerEvaluation[];
     consensusScore?: number;
@@ -600,6 +637,141 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                             </div>
                         )}
 
+                        {/* 🐦 CANARY SCORE - CB Insights Style Health Score */}
+                        {intelligentResults.canaryScore && (
+                            <div className="space-y-4 bg-gradient-to-b from-amber-900/30 to-amber-950/50 border-2 border-amber-500/50 rounded-2xl p-5">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xl font-bold text-amber-400 flex items-center gap-2">
+                                        🐦 Canary Score
+                                    </h3>
+                                    <div className={`px-6 py-3 rounded-xl font-bold text-2xl ${intelligentResults.canaryScore.grade === 'A' ? 'bg-green-500/20 text-green-400 border-2 border-green-500/40' :
+                                        intelligentResults.canaryScore.grade === 'B' ? 'bg-blue-500/20 text-blue-400 border-2 border-blue-500/40' :
+                                            intelligentResults.canaryScore.grade === 'C' ? 'bg-yellow-500/20 text-yellow-400 border-2 border-yellow-500/40' :
+                                                intelligentResults.canaryScore.grade === 'D' ? 'bg-orange-500/20 text-orange-400 border-2 border-orange-500/40' :
+                                                    'bg-red-500/20 text-red-400 border-2 border-red-500/40'
+                                        }`}>
+                                        {intelligentResults.canaryScore.total}/1000 ({intelligentResults.canaryScore.grade})
+                                    </div>
+                                </div>
+
+                                {/* Score Interpretation */}
+                                <div className="bg-black/30 border border-amber-500/20 rounded-xl p-4">
+                                    <p className="text-amber-300 text-lg font-medium">{intelligentResults.canaryScore.verdict}</p>
+                                    <p className="text-gray-400 text-sm mt-1">{intelligentResults.canaryScore.percentile}</p>
+                                </div>
+
+                                {/* 4-Factor Breakdown */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    {/* Growth Potential */}
+                                    <div className="bg-green-950/30 border border-green-500/20 rounded-xl p-3">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-green-400 font-semibold text-sm">📈 Growth Potential</span>
+                                            <span className="text-green-300 font-bold">{intelligentResults.canaryScore.factors.growthPotential?.score || 0}/500</span>
+                                        </div>
+                                        <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                                            <div className="bg-green-500 h-2 rounded-full" style={{ width: `${((intelligentResults.canaryScore.factors.growthPotential?.score || 0) / 500) * 100}%` }}></div>
+                                        </div>
+                                        <p className="text-gray-400 text-xs">{intelligentResults.canaryScore.factors.growthPotential?.reasoning}</p>
+                                    </div>
+
+                                    {/* Competitive Density */}
+                                    <div className="bg-blue-950/30 border border-blue-500/20 rounded-xl p-3">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-blue-400 font-semibold text-sm">⚔️ Competition</span>
+                                            <span className="text-blue-300 font-bold">{intelligentResults.canaryScore.factors.competitiveDensity?.score || 0}/200</span>
+                                        </div>
+                                        <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                                            <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${((intelligentResults.canaryScore.factors.competitiveDensity?.score || 0) / 200) * 100}%` }}></div>
+                                        </div>
+                                        <p className="text-gray-400 text-xs">{intelligentResults.canaryScore.factors.competitiveDensity?.reasoning}</p>
+                                    </div>
+
+                                    {/* Timing Signal */}
+                                    <div className="bg-purple-950/30 border border-purple-500/20 rounded-xl p-3">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-purple-400 font-semibold text-sm">⏰ Timing</span>
+                                            <span className="text-purple-300 font-bold">{intelligentResults.canaryScore.factors.timingSignal?.score || 0}/150</span>
+                                        </div>
+                                        <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                                            <div className="bg-purple-500 h-2 rounded-full" style={{ width: `${((intelligentResults.canaryScore.factors.timingSignal?.score || 0) / 150) * 100}%` }}></div>
+                                        </div>
+                                        <p className="text-gray-400 text-xs">{intelligentResults.canaryScore.factors.timingSignal?.reasoning}</p>
+                                    </div>
+
+                                    {/* Defensibility */}
+                                    <div className="bg-orange-950/30 border border-orange-500/20 rounded-xl p-3">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-orange-400 font-semibold text-sm">🛡️ Defensibility</span>
+                                            <span className="text-orange-300 font-bold">{intelligentResults.canaryScore.factors.defensibility?.score || 0}/150</span>
+                                        </div>
+                                        <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                                            <div className="bg-orange-500 h-2 rounded-full" style={{ width: `${((intelligentResults.canaryScore.factors.defensibility?.score || 0) / 150) * 100}%` }}></div>
+                                        </div>
+                                        <p className="text-gray-400 text-xs">{intelligentResults.canaryScore.factors.defensibility?.reasoning}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 📊 SWOT ANALYSIS */}
+                        {intelligentResults.swotAnalysis && (
+                            <div className="space-y-4 bg-gradient-to-b from-indigo-900/30 to-indigo-950/50 border-2 border-indigo-500/50 rounded-2xl p-5">
+                                <h3 className="text-xl font-bold text-indigo-400 flex items-center gap-2">
+                                    📊 SWOT Analysis
+                                </h3>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    {/* Strengths */}
+                                    <div className="bg-green-950/40 border border-green-500/30 rounded-xl p-4">
+                                        <h4 className="text-green-400 font-bold mb-2 flex items-center gap-2">💪 Strengths</h4>
+                                        <ul className="space-y-1">
+                                            {intelligentResults.swotAnalysis.strengths?.map((s, i) => (
+                                                <li key={i} className="text-gray-300 text-sm flex items-start gap-2">
+                                                    <span className="text-green-400">✓</span> {s}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+
+                                    {/* Weaknesses */}
+                                    <div className="bg-red-950/40 border border-red-500/30 rounded-xl p-4">
+                                        <h4 className="text-red-400 font-bold mb-2 flex items-center gap-2">⚠️ Weaknesses</h4>
+                                        <ul className="space-y-1">
+                                            {intelligentResults.swotAnalysis.weaknesses?.map((w, i) => (
+                                                <li key={i} className="text-gray-300 text-sm flex items-start gap-2">
+                                                    <span className="text-red-400">✗</span> {w}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+
+                                    {/* Opportunities */}
+                                    <div className="bg-blue-950/40 border border-blue-500/30 rounded-xl p-4">
+                                        <h4 className="text-blue-400 font-bold mb-2 flex items-center gap-2">🚀 Opportunities</h4>
+                                        <ul className="space-y-1">
+                                            {intelligentResults.swotAnalysis.opportunities?.map((o, i) => (
+                                                <li key={i} className="text-gray-300 text-sm flex items-start gap-2">
+                                                    <span className="text-blue-400">→</span> {o}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+
+                                    {/* Threats */}
+                                    <div className="bg-orange-950/40 border border-orange-500/30 rounded-xl p-4">
+                                        <h4 className="text-orange-400 font-bold mb-2 flex items-center gap-2">⚡ Threats</h4>
+                                        <ul className="space-y-1">
+                                            {intelligentResults.swotAnalysis.threats?.map((t, i) => (
+                                                <li key={i} className="text-gray-300 text-sm flex items-start gap-2">
+                                                    <span className="text-orange-400">!</span> {t}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* 💀 BRUTAL REALITY CHECK (AI/Tech only) */}
                         {intelligentResults.brutalRealityCheck && (
                             <div className="space-y-4 bg-gradient-to-b from-red-900/30 to-red-950/50 border-2 border-red-500/50 rounded-2xl p-5">
@@ -608,8 +780,8 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                                         💀🩸 Brutal Reality Check 🦈🔥
                                     </h3>
                                     <div className={`px-4 py-2 rounded-xl font-bold text-lg ${intelligentResults.brutalRealityCheck.survivalProbability?.includes('50') ? 'bg-green-500/20 text-green-400 border border-green-500/40' :
-                                            intelligentResults.brutalRealityCheck.survivalProbability?.includes('35') ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40' :
-                                                'bg-red-500/20 text-red-400 border border-red-500/40'
+                                        intelligentResults.brutalRealityCheck.survivalProbability?.includes('35') ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40' :
+                                            'bg-red-500/20 text-red-400 border border-red-500/40'
                                         }`}>
                                         Survival: {intelligentResults.brutalRealityCheck.survivalProbability}
                                     </div>
@@ -668,7 +840,7 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                                         <div className="flex flex-wrap gap-2">
                                             {intelligentResults.brutalRealityCheck.startupGraveyard.map((startup, idx) => (
                                                 <span key={idx} className="bg-gray-800/50 border border-gray-600/30 rounded-lg px-3 py-1 text-gray-400 text-sm">
-                                                    ⚰️ {startup}
+                                                    ⚰️ {typeof startup === 'string' ? startup : `${startup.name}${startup.raised ? ` ($${startup.raised})` : ''}`}
                                                 </span>
                                             ))}
                                         </div>
