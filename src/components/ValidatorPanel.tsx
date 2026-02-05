@@ -276,6 +276,31 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
     }
     const [appAuditResults, setAppAuditResults] = useState<AppAuditResult | null>(null);
 
+    // Ecosystem Intelligence state - market signals from GitHub landscape
+    interface EcosystemIntelResult {
+        searchQuery: string;
+        totalRepos: number;
+        marketSignal: 'EMERGING' | 'GROWING' | 'HOT' | 'SATURATED' | 'DECLINING';
+        competitors: {
+            name: string;
+            fullName: string;
+            stars: number;
+            forks: number;
+            description: string;
+            url: string;
+            language: string;
+        }[];
+        timing: {
+            reposLastMonth: number;
+            growthRate: string;
+            verdict: string;
+        };
+        techStack: { language: string; count: number }[];
+        insights: string[];
+        opportunities: string[];
+    }
+    const [ecosystemResults, setEcosystemResults] = useState<EcosystemIntelResult | null>(null);
+
     // Send analysis report via email
     const sendEmailReport = async () => {
         if (!intelligentResults) return;
@@ -469,6 +494,23 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                             }
                         })
                         .catch(err => console.log('App Audit check failed:', err));
+
+                    // Run Ecosystem Intelligence (competitive landscape from GitHub)
+                    fetch('/api/ecosystem-intel', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            description: projectDescription,
+                            repoUrl: githubUrl
+                        })
+                    })
+                        .then(res => res.json())
+                        .then(ecoData => {
+                            if (ecoData.marketSignal) {
+                                setEcosystemResults(ecoData);
+                            }
+                        })
+                        .catch(err => console.log('Ecosystem Intel failed:', err));
                 }
             }
         } catch (err) {
@@ -796,6 +838,79 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                             </div>
                         )}
 
+                        {/* 🌍 ECOSYSTEM INTELLIGENCE - Competitive Landscape from GitHub */}
+                        {ecosystemResults && (
+                            <div className="space-y-4 bg-gradient-to-b from-emerald-900/30 to-emerald-950/50 border-2 border-emerald-500/50 rounded-2xl p-5">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xl font-bold text-emerald-400 flex items-center gap-2">
+                                        🌍 Ecosystem Intel
+                                        <span className="text-xs font-normal text-emerald-300/60 ml-2">Market landscape</span>
+                                    </h3>
+                                    <div className={`px-4 py-2 rounded-xl font-bold text-lg ${ecosystemResults.marketSignal === 'EMERGING' ? 'bg-green-500/20 text-green-400 border-2 border-green-500/40' :
+                                            ecosystemResults.marketSignal === 'GROWING' ? 'bg-blue-500/20 text-blue-400 border-2 border-blue-500/40' :
+                                                ecosystemResults.marketSignal === 'HOT' ? 'bg-orange-500/20 text-orange-400 border-2 border-orange-500/40' :
+                                                    ecosystemResults.marketSignal === 'SATURATED' ? 'bg-red-500/20 text-red-400 border-2 border-red-500/40' :
+                                                        'bg-gray-500/20 text-gray-400 border-2 border-gray-500/40'
+                                        }`}>
+                                        {ecosystemResults.marketSignal}
+                                    </div>
+                                </div>
+
+                                {/* Timing */}
+                                <div className="bg-black/30 border border-emerald-500/20 rounded-xl p-4">
+                                    <p className="text-emerald-200 text-lg font-medium">{ecosystemResults.timing.verdict}</p>
+                                    <p className="text-emerald-400/70 text-sm mt-1">
+                                        {ecosystemResults.totalRepos.toLocaleString()} similar repos • {ecosystemResults.timing.reposLastMonth} created this month
+                                    </p>
+                                </div>
+
+                                {/* Top Competitors */}
+                                {ecosystemResults.competitors.length > 0 && (
+                                    <div className="space-y-2">
+                                        <h4 className="text-emerald-300 font-semibold text-sm">🏆 Top Competitors</h4>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {ecosystemResults.competitors.slice(0, 4).map((comp, idx) => (
+                                                <a key={idx}
+                                                    href={comp.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="bg-emerald-950/40 rounded-lg p-3 border border-emerald-500/20 hover:border-emerald-500/50 transition-colors">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-emerald-300 font-medium truncate">{comp.name}</span>
+                                                        <span className="text-emerald-400 text-sm">⭐ {comp.stars.toLocaleString()}</span>
+                                                    </div>
+                                                    <p className="text-emerald-300/50 text-xs truncate mt-1">{comp.description || 'No description'}</p>
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Insights */}
+                                {ecosystemResults.insights.length > 0 && (
+                                    <div className="space-y-2">
+                                        <h4 className="text-emerald-300 font-semibold text-sm">💡 Market Insights</h4>
+                                        <div className="space-y-1">
+                                            {ecosystemResults.insights.slice(0, 3).map((insight, idx) => (
+                                                <p key={idx} className="text-emerald-200/80 text-sm">{insight}</p>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Opportunities */}
+                                {ecosystemResults.opportunities.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 pt-2">
+                                        {ecosystemResults.opportunities.map((opp, idx) => (
+                                            <span key={idx} className="bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full text-sm border border-emerald-500/30">
+                                                💎 {opp}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* 🔍 APP AUDIT - UX/Performance/Business Validation */}
                         {appAuditResults && (
                             <div className="space-y-4 bg-gradient-to-b from-purple-900/30 to-purple-950/50 border-2 border-purple-500/50 rounded-2xl p-5">
@@ -805,10 +920,10 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                                         <span className="text-xs font-normal text-purple-300/60 ml-2">Automated validation</span>
                                     </h3>
                                     <div className={`px-6 py-3 rounded-xl font-bold text-2xl ${appAuditResults.grade === 'A' ? 'bg-green-500/20 text-green-400 border-2 border-green-500/40' :
-                                            appAuditResults.grade === 'B' ? 'bg-blue-500/20 text-blue-400 border-2 border-blue-500/40' :
-                                                appAuditResults.grade === 'C' ? 'bg-yellow-500/20 text-yellow-400 border-2 border-yellow-500/40' :
-                                                    appAuditResults.grade === 'D' ? 'bg-orange-500/20 text-orange-400 border-2 border-orange-500/40' :
-                                                        'bg-red-500/20 text-red-400 border-2 border-red-500/40'
+                                        appAuditResults.grade === 'B' ? 'bg-blue-500/20 text-blue-400 border-2 border-blue-500/40' :
+                                            appAuditResults.grade === 'C' ? 'bg-yellow-500/20 text-yellow-400 border-2 border-yellow-500/40' :
+                                                appAuditResults.grade === 'D' ? 'bg-orange-500/20 text-orange-400 border-2 border-orange-500/40' :
+                                                    'bg-red-500/20 text-red-400 border-2 border-red-500/40'
                                         }`}>
                                         {appAuditResults.overallScore}/100 ({appAuditResults.grade})
                                     </div>
