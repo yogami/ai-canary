@@ -271,16 +271,7 @@ Provide a JSON response with:
 }
 
 export async function POST(request: NextRequest) {
-    // FEATURE FLAG CHECK
-    const searchParams = request.nextUrl.searchParams;
-    const auditEnabled = searchParams.get('audit') === 'true';
-
-    if (!auditEnabled) {
-        return NextResponse.json(
-            { error: 'App Audit feature is not enabled. Add ?audit=true to enable.' },
-            { status: 403 }
-        );
-    }
+    // App Audit is now LIVE - no feature flag required
 
     try {
         const body = await request.json();
