@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import {
   getCachedStories,
   setCachedStories,
@@ -198,6 +199,7 @@ export default function Home() {
   const [dataSource, setDataSource] = useState<'live' | 'cached'>('live');
   const [activeSource, setActiveSource] = useState<SourceType>('asknews');
   const [validatorKeywords, setValidatorKeywords] = useState<string[]>([]);
+  const [showQRCode, setShowQRCode] = useState(false);
 
   useEffect(() => {
     fetchNews(activeSource);
@@ -364,6 +366,13 @@ export default function Home() {
             </p>
           </div>
           <div className="flex items-center gap-4">
+            {/* QR Code Button for Mobile Access */}
+            <button
+              onClick={() => setShowQRCode(true)}
+              className="px-3 py-1.5 text-xs rounded-lg bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 text-purple-300 hover:border-purple-400/50 hover:text-white transition-all"
+            >
+              📱 Mobile
+            </button>
             {/* Export Button */}
             <button
               onClick={exportToCsv}
@@ -381,6 +390,34 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* QR Code Modal */}
+        {showQRCode && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center" onClick={() => setShowQRCode(false)}>
+            <div className="bg-gradient-to-b from-gray-900 to-gray-950 border border-white/20 rounded-2xl p-8 max-w-sm mx-4" onClick={e => e.stopPropagation()}>
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-bold text-white mb-2">📱 Scan to Beta Test</h3>
+                <p className="text-gray-400 text-sm">Access AICanary on your mobile device</p>
+              </div>
+              <div className="bg-white p-4 rounded-xl flex items-center justify-center">
+                <QRCodeSVG
+                  value="https://ai-canary-production.up.railway.app"
+                  size={200}
+                  bgColor="#ffffff"
+                  fgColor="#000000"
+                  level="H"
+                />
+              </div>
+              <p className="text-center text-xs text-gray-500 mt-4">ai-canary-production.up.railway.app</p>
+              <button
+                onClick={() => setShowQRCode(false)}
+                className="w-full mt-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
 
         <SearchBar value={search} onChange={setSearch} />
         <QuickFilters activeFilter={search} onSelect={setSearch} />

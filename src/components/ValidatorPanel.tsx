@@ -26,6 +26,24 @@ interface ProducerEvaluation {
     relevantStories: number[];
 }
 
+interface BrutalRealityCheck {
+    existingSolutions: Array<{ name: string; url?: string; whyBetter: string }>;
+    bigFishThreat: {
+        company: string;
+        timeToReplicate: string;
+        whyTheyWould: string;
+        whyTheyMightNot: string;
+    };
+    startupGraveyard: string[];
+    brutalVerdict: string;
+    survivalProbability: string;
+    salvagePlan: {
+        nichePivot: string;
+        unfairAdvantage: string;
+        actionableSteps: string[];
+    };
+}
+
 interface AnalysisResult {
     threats: Array<{ storyIndex: number; reason: string; story?: Story }>;
     opportunities: Array<{ storyIndex: number; reason: string; story?: Story }>;
@@ -36,6 +54,8 @@ interface AnalysisResult {
     // Producer Panel (Film/TV only)
     producerPanel?: ProducerEvaluation[];
     consensusScore?: number;
+    // Brutal Reality Check (AI/Tech only)
+    brutalRealityCheck?: BrutalRealityCheck;
 }
 
 type Niche = 'ai' | 'media' | 'music' | 'gaming' | 'fintech' | 'healthcare' | 'climate';
@@ -519,7 +539,7 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                                         <div className="flex items-center gap-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 rounded-xl px-4 py-2">
                                             <span className="text-amber-300 text-sm font-medium">Consensus Score:</span>
                                             <span className={`text-2xl font-bold ${intelligentResults.consensusScore >= 7 ? 'text-green-400' :
-                                                    intelligentResults.consensusScore >= 5 ? 'text-yellow-400' : 'text-red-400'
+                                                intelligentResults.consensusScore >= 5 ? 'text-yellow-400' : 'text-red-400'
                                                 }`}>
                                                 {intelligentResults.consensusScore}/10
                                             </span>
@@ -537,7 +557,7 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                                                     <p className="text-xs text-gray-400">{producer.role}</p>
                                                 </div>
                                                 <div className={`text-2xl font-bold ${producer.score >= 7 ? 'text-green-400' :
-                                                        producer.score >= 5 ? 'text-yellow-400' : 'text-red-400'
+                                                    producer.score >= 5 ? 'text-yellow-400' : 'text-red-400'
                                                     }`}>
                                                     {producer.score}/10
                                                 </div>
@@ -577,6 +597,110 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                                         </div>
                                     ))}
                                 </div>
+                            </div>
+                        )}
+
+                        {/* 💀 BRUTAL REALITY CHECK (AI/Tech only) */}
+                        {intelligentResults.brutalRealityCheck && (
+                            <div className="space-y-4 bg-gradient-to-b from-red-900/30 to-red-950/50 border-2 border-red-500/50 rounded-2xl p-5">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xl font-bold text-red-400 flex items-center gap-2">
+                                        💀🩸 Brutal Reality Check 🦈🔥
+                                    </h3>
+                                    <div className={`px-4 py-2 rounded-xl font-bold text-lg ${intelligentResults.brutalRealityCheck.survivalProbability?.includes('50') ? 'bg-green-500/20 text-green-400 border border-green-500/40' :
+                                            intelligentResults.brutalRealityCheck.survivalProbability?.includes('35') ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40' :
+                                                'bg-red-500/20 text-red-400 border border-red-500/40'
+                                        }`}>
+                                        Survival: {intelligentResults.brutalRealityCheck.survivalProbability}
+                                    </div>
+                                </div>
+
+                                {/* Brutal Verdict */}
+                                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                                    <p className="text-red-300 text-lg font-medium italic">
+                                        &quot;{intelligentResults.brutalRealityCheck.brutalVerdict}&quot;
+                                    </p>
+                                </div>
+
+                                {/* Existing Solutions */}
+                                {intelligentResults.brutalRealityCheck.existingSolutions?.length > 0 && (
+                                    <div className="bg-black/30 border border-red-500/20 rounded-xl p-4">
+                                        <h4 className="text-red-400 font-semibold mb-3 flex items-center gap-2">⚠️ Already Exists (Why Bother?)</h4>
+                                        <div className="space-y-2">
+                                            {intelligentResults.brutalRealityCheck.existingSolutions.map((sol, idx) => (
+                                                <div key={idx} className="flex items-start gap-3 bg-red-950/30 rounded-lg p-3">
+                                                    <span className="text-2xl">🎯</span>
+                                                    <div>
+                                                        <p className="text-white font-medium">{sol.name}</p>
+                                                        <p className="text-gray-400 text-sm">{sol.whyBetter}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Big Fish Threat */}
+                                {intelligentResults.brutalRealityCheck.bigFishThreat && (
+                                    <div className="bg-black/30 border border-orange-500/30 rounded-xl p-4">
+                                        <h4 className="text-orange-400 font-semibold mb-3 flex items-center gap-2">🦈 Big Fish Can Crush You</h4>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-orange-950/30 rounded-lg p-3">
+                                                <p className="text-orange-300 text-xs mb-1">Threat From</p>
+                                                <p className="text-white font-bold text-lg">{intelligentResults.brutalRealityCheck.bigFishThreat.company}</p>
+                                            </div>
+                                            <div className="bg-orange-950/30 rounded-lg p-3">
+                                                <p className="text-orange-300 text-xs mb-1">Time to Replicate</p>
+                                                <p className="text-white font-bold text-lg">{intelligentResults.brutalRealityCheck.bigFishThreat.timeToReplicate}</p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 text-sm">
+                                            <p className="text-gray-400"><span className="text-red-400">Why they would:</span> {intelligentResults.brutalRealityCheck.bigFishThreat.whyTheyWould}</p>
+                                            <p className="text-gray-400 mt-1"><span className="text-green-400">Why they might not:</span> {intelligentResults.brutalRealityCheck.bigFishThreat.whyTheyMightNot}</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Startup Graveyard */}
+                                {intelligentResults.brutalRealityCheck.startupGraveyard?.length > 0 && (
+                                    <div className="bg-black/30 border border-gray-500/30 rounded-xl p-4">
+                                        <h4 className="text-gray-400 font-semibold mb-3 flex items-center gap-2">🪦 Startup Graveyard (They Tried, They Failed)</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {intelligentResults.brutalRealityCheck.startupGraveyard.map((startup, idx) => (
+                                                <span key={idx} className="bg-gray-800/50 border border-gray-600/30 rounded-lg px-3 py-1 text-gray-400 text-sm">
+                                                    ⚰️ {startup}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Salvage Plan */}
+                                {intelligentResults.brutalRealityCheck.salvagePlan && (
+                                    <div className="bg-gradient-to-r from-green-900/20 to-emerald-900/20 border border-green-500/30 rounded-xl p-4">
+                                        <h4 className="text-green-400 font-semibold mb-3 flex items-center gap-2">🛡️ How You Might Survive</h4>
+                                        <div className="space-y-3">
+                                            <div>
+                                                <p className="text-green-300 text-xs mb-1">🎯 Niche Pivot Suggestion</p>
+                                                <p className="text-white text-sm">{intelligentResults.brutalRealityCheck.salvagePlan.nichePivot}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-green-300 text-xs mb-1">🔥 Unfair Advantage Needed</p>
+                                                <p className="text-white text-sm">{intelligentResults.brutalRealityCheck.salvagePlan.unfairAdvantage}</p>
+                                            </div>
+                                            {intelligentResults.brutalRealityCheck.salvagePlan.actionableSteps?.length > 0 && (
+                                                <div>
+                                                    <p className="text-green-300 text-xs mb-1">📋 Actionable Steps</p>
+                                                    <ul className="text-white text-sm space-y-1">
+                                                        {intelligentResults.brutalRealityCheck.salvagePlan.actionableSteps.map((step, idx) => (
+                                                            <li key={idx}>✓ {step}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 

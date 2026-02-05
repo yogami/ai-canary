@@ -14,6 +14,28 @@ interface IntelligentAnalysisRequest {
     niche?: string;
 }
 
+// ============ RATE LIMITING: Protect API credits during beta ============
+const RATE_LIMIT_MAX = 10; // Max analyses per IP per hour
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour in ms
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+function checkRateLimit(ip: string): { allowed: boolean; remaining: number; resetIn: number } {
+    const now = Date.now();
+    const record = rateLimitStore.get(ip);
+
+    if (!record || now > record.resetTime) {
+        rateLimitStore.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+        return { allowed: true, remaining: RATE_LIMIT_MAX - 1, resetIn: RATE_LIMIT_WINDOW };
+    }
+
+    if (record.count >= RATE_LIMIT_MAX) {
+        return { allowed: false, remaining: 0, resetIn: record.resetTime - now };
+    }
+
+    record.count++;
+    return { allowed: true, remaining: RATE_LIMIT_MAX - record.count, resetIn: record.resetTime - now };
+}
+
 // ============ SECURITY: Prompt Injection Protection ============
 
 // Patterns that indicate potential prompt injection attempts
@@ -68,6 +90,29 @@ function detectInjection(text: string): { isInjection: boolean; pattern?: string
 
 export async function POST(request: Request) {
     try {
+        // ======= RATE LIMITING (Beta Protection) =======
+        const forwarded = request.headers.get('x-forwarded-for');
+        const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
+        const rateLimit = checkRateLimit(ip);
+
+        if (!rateLimit.allowed) {
+            const resetMinutes = Math.ceil(rateLimit.resetIn / 60000);
+            return NextResponse.json({
+                error: `Rate limit exceeded (${RATE_LIMIT_MAX}/hour). Try again in ${resetMinutes} minutes.`,
+                analysis: null,
+                rateLimited: true,
+                resetIn: rateLimit.resetIn
+            }, {
+                status: 429,
+                headers: {
+                    'X-RateLimit-Limit': RATE_LIMIT_MAX.toString(),
+                    'X-RateLimit-Remaining': '0',
+                    'X-RateLimit-Reset': new Date(Date.now() + rateLimit.resetIn).toISOString()
+                }
+            });
+        }
+        // ======= END RATE LIMITING =======
+
         const body: IntelligentAnalysisRequest = await request.json();
         const { projectDescription, stories, niche = 'technology' } = body;
 
@@ -201,6 +246,71 @@ Format your response as JSON:
   "marketGaps": ["gap1", "gap2"],
   "threats": [{"storyIndex": 1, "reason": "..."}],
   "opportunities": [{"storyIndex": 2, "reason": "..."}],
+  "recommendation": "..."
+}`;
+        } else if (safeNiche === 'ai' || safeNiche === 'technology') {
+            // BRUTAL REALITY CHECK: AI/Tech startup validation with harsh feedback
+            systemPrompt = `You are a BRUTALLY HONEST venture capitalist and tech industry veteran who has seen 10,000 pitches. Your job is to provide a harsh but constructive "Reality Check" for AI/tech startup ideas.
+
+You must be SAVAGELY HONEST about:
+🩸 EXISTING SOLUTIONS: What products/tools ALREADY solve this problem? (Be specific - name real companies)
+🦈 BIG FISH THREATS: Can Google, OpenAI, Microsoft, or Meta build this in a weekend hackathon?
+💀 BUILD VS BUY: Why would any company build this when they could just use [existing solution]?
+🪦 GRAVEYARD: What similar startups have tried and failed? Why?
+
+BUT ALSO provide:
+🛡️ SURVIVAL STRATEGIES: What could make this defensible despite the threats?
+🎯 NICHE PIVOT: Is there a smaller, defensible niche they could own?
+🔥 UNFAIR ADVANTAGES: What would they need to actually succeed?
+
+Be funny, sarcastic, but ultimately helpful. Use brutal metaphors. Reference actual companies and products.`;
+
+            userPrompt = `## STARTUP IDEA TO ROAST:
+${sanitizedDescription}
+
+## CURRENT AI/TECH NEWS (for context):
+${storySummaries}
+
+## BRUTAL REALITY CHECK REQUIRED:
+
+Analyze this idea with zero sugar-coating. Be specific about:
+1. Name 2-3 existing solutions that already do this
+2. Estimate how fast a FAANG company could replicate this (hours/days/weeks)
+3. Why this startup will probably fail (be specific)
+4. BUT - what unique angle could save them?
+5. Overall survival probability (be honest)
+
+Also provide standard analysis:
+- Market timing (good/neutral/risky)
+- Threats from the news stories
+- Opportunities from the news stories
+
+Format your response as JSON:
+{
+  "brutalRealityCheck": {
+    "existingSolutions": [
+      {"name": "Existing Product 1", "url": "https://...", "whyBetter": "They already have..."}
+    ],
+    "bigFishThreat": {
+      "company": "Google/OpenAI/etc",
+      "timeToReplicate": "2 hours / 2 days / 2 weeks",
+      "whyTheyWould": "Because...",
+      "whyTheyMightNot": "Unless..."
+    },
+    "startupGraveyard": ["Failed Startup 1 (reason)", "Failed Startup 2 (reason)"],
+    "brutalVerdict": "One savage sentence summary",
+    "survivalProbability": "5%" | "15%" | "35%" | "50%+",
+    "salvagePlan": {
+      "nichePivot": "Suggested pivot to defensible niche",
+      "unfairAdvantage": "What they'd need to win",
+      "actionableSteps": ["Step 1", "Step 2", "Step 3"]
+    }
+  },
+  "threats": [{"storyIndex": 1, "reason": "..."}],
+  "opportunities": [{"storyIndex": 2, "reason": "..."}],
+  "marketGaps": ["gap1", "gap2"],
+  "timing": "good|neutral|risky",
+  "timingReason": "...",
   "recommendation": "..."
 }`;
         } else {
