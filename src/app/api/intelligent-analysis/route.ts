@@ -484,21 +484,38 @@ Provide an exhaustive due diligence evaluation in valid JSON matching this schem
         const data = await response.json();
         const analysisText = data.choices?.[0]?.message?.content;
 
-        let analysis;
-        try {
-            analysis = JSON.parse(analysisText);
-        } catch {
+        let analysis: any = null;
+        if (analysisText) {
+            try {
+                // Try to strip markdown code blocks if present
+                let cleanText = analysisText;
+                if (cleanText.includes('```json')) {
+                    cleanText = cleanText.split('```json')[1].split('```')[0].trim();
+                } else if (cleanText.includes('```')) {
+                    cleanText = cleanText.split('```')[1].split('```')[0].trim();
+                }
+                analysis = JSON.parse(cleanText);
+            } catch {
+                analysis = null;
+            }
+        }
+
+        if (!analysis) {
             analysis = {
-                raw: analysisText,
+                raw: analysisText || "No content returned",
                 threats: [],
                 opportunities: [],
                 marketGaps: [],
                 timing: 'neutral',
-                recommendation: analysisText
+                recommendation: analysisText || "No content returned"
             };
         }
 
         // Defensive normalization for canaryScore shape
+        if (!analysis.canaryScore) {
+             analysis.canaryScore = { total: 600, grade: 'C' };
+        }
+        
         if (typeof analysis.canaryScore === 'number') {
             const score = analysis.canaryScore;
             analysis.canaryScore = {
