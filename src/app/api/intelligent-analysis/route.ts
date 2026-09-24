@@ -388,13 +388,13 @@ Provide an exhaustive due diligence evaluation in valid JSON matching this schem
 
         let response: Response | null = null;
         let usedProvider = 'openrouter';
-        let usedModel = 'meta-llama/llama-3.3-70b-instruct';
+        let usedModel = 'anthropic/claude-3.5-sonnet';
 
         // 1. Try OpenRouter first (paid, reliable frontier model)
         if (openRouterKey) {
             try {
                 usedProvider = 'openrouter';
-                usedModel = 'meta-llama/llama-3.3-70b-instruct';
+                usedModel = 'anthropic/claude-3.5-sonnet';
                 response = await fetch(OPENROUTER_API_URL, {
                     method: 'POST',
                     headers: {
@@ -416,8 +416,8 @@ Provide an exhaustive due diligence evaluation in valid JSON matching this schem
                 });
 
                 if (!response.ok) {
-                    console.warn(`OpenRouter primary model failed (${response.status}), trying gpt-4o-mini fallback...`);
-                    usedModel = 'openai/gpt-4o-mini';
+                    console.warn(`OpenRouter primary model failed (${response.status}), trying gpt-4o fallback...`);
+                    usedModel = 'openai/gpt-4o';
                     response = await fetch(OPENROUTER_API_URL, {
                         method: 'POST',
                         headers: {
