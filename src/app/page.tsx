@@ -1,15 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
 import {
   getCachedStories,
-  setCachedStories,
-  addAlertToHistory,
-  isOnboardingDone,
-  markOnboardingDone,
-  getWatchlist,
-  addToWatchlist
+  setCachedStories
 } from '@/lib/cache';
 import ValidatorPanel from '@/components/ValidatorPanel';
 
@@ -24,211 +18,23 @@ interface Story {
   url?: string;
 }
 
-// Loading skeleton for story cards (Technical Judge feedback)
-function StoryCardSkeleton() {
-  return (
-    <div className="glass-card p-6 animate-pulse">
-      <div className="flex items-start justify-between gap-4 mb-3">
-        <div className="flex-1">
-          <div className="h-5 bg-gray-700 rounded w-3/4 mb-2"></div>
-          <div className="h-5 bg-gray-700 rounded w-1/2"></div>
-        </div>
-        <div className="h-6 w-20 bg-gray-700 rounded-full"></div>
-      </div>
-      <div className="h-4 bg-gray-700 rounded w-full mb-2"></div>
-      <div className="h-4 bg-gray-700 rounded w-2/3 mb-4"></div>
-      <div className="flex items-center justify-between">
-        <div className="h-4 w-24 bg-gray-700 rounded"></div>
-        <div className="h-10 w-28 bg-gray-700 rounded-xl"></div>
-      </div>
-    </div>
-  );
-}
-
-function SentimentBadge({ sentiment }: { sentiment?: number }) {
-  if (sentiment === undefined || sentiment === null) {
-    return <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-400">⏳ Loading</span>;
-  }
-
-  const getSentimentClass = () => {
-    if (sentiment > 0.3) return 'sentiment-positive';
-    if (sentiment < -0.3) return 'sentiment-negative';
-    return 'sentiment-neutral';
-  };
-
-  const getSentimentLabel = () => {
-    if (sentiment > 0.3) return '🚀 Bullish';
-    if (sentiment < -0.3) return '📉 Bearish';
-    return '⚖️ Neutral';
-  };
-
-  return (
-    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getSentimentClass()}`}>
-      {getSentimentLabel()}
-    </span>
-  );
-}
-
-// Impact Score Badge (Perplexity strategic recommendation - sentiment * coverage)
-function ImpactBadge({ sentiment, coverage }: { sentiment?: number; coverage?: number }) {
-  if (sentiment === undefined || coverage === undefined) return null;
-
-  // Calculate impact score: |sentiment| * coverage / 100
-  const impactScore = Math.abs(sentiment) * (coverage / 100);
-
-  if (impactScore > 0.3) {
-    return (
-      <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-amber-500 to-orange-500 text-white">
-        ⚡ High Impact
-      </span>
-    );
-  }
-  return null;
-}
-
-function StoryCard({ story, onAlert }: { story: Story; onAlert: (story: Story) => void }) {
-  return (
-    <div className="glass-card p-6 fade-in">
-      <div className="flex items-start justify-between gap-4 mb-3">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <ImpactBadge sentiment={story.sentiment} coverage={story.coverage} />
-          </div>
-          <h3 className="text-lg font-semibold text-white leading-tight">
-            {story.headline}
-          </h3>
-        </div>
-        <SentimentBadge sentiment={story.sentiment} />
-      </div>
-
-      {story.summary && (
-        <p className="text-gray-400 text-sm mb-4 line-clamp-2">
-          {story.summary}
-        </p>
-      )}
-
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          {story.coverage !== undefined && (
-            <span className="text-xs text-gray-500">
-              📊 {story.coverage}% coverage
-            </span>
-          )}
-          {story.categories && story.categories.length > 0 && (
-            <div className="flex gap-2">
-              {story.categories.slice(0, 2).map((cat, i) => (
-                <span key={i} className="text-xs px-2 py-0.5 bg-white/5 rounded-full text-gray-400">
-                  {cat}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <button
-          onClick={() => onAlert(story)}
-          className="glow-btn text-sm py-2 px-4"
-        >
-          🔔 Alert Me
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function SearchBar({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  return (
-    <div className="relative">
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Search AI news (e.g., RAG, LLM, Agents...)"
-        className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 transition-all"
-      />
-      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">
-        🔍
-      </span>
-    </div>
-  );
-}
-
-// Quick filters for AI domains (UX Judge feedback)
-const QUICK_FILTERS = [
-  { label: '🤖 LLMs', query: 'LLM' },
-  { label: '🎨 GenAI', query: 'generative' },
-  { label: '💰 Funding', query: 'funding' },
-  { label: '🚀 Launches', query: 'launch' },
-  { label: '📊 Research', query: 'research' },
-];
-
-function QuickFilters({ activeFilter, onSelect }: { activeFilter: string; onSelect: (q: string) => void }) {
-  return (
-    <div className="flex flex-wrap gap-2 mt-4">
-      {QUICK_FILTERS.map((filter) => (
-        <button
-          key={filter.query}
-          onClick={() => onSelect(activeFilter === filter.query ? '' : filter.query)}
-          className={`px-3 py-1.5 text-xs rounded-full transition-all ${activeFilter === filter.query
-            ? 'bg-indigo-500 text-white'
-            : 'bg-white/5 text-gray-400 hover:bg-white/10'
-            }`}
-        >
-          {filter.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-
-type SourceType = 'asknews' | 'hackernews' | 'github' | 'polymarket';
-
-const SOURCE_TABS = [
-  { id: 'asknews' as SourceType, label: '📰 AskNews', description: 'Real-time AI news' },
-  { id: 'hackernews' as SourceType, label: '🟠 HackerNews', description: 'Tech community' },
-  { id: 'github' as SourceType, label: '🐙 GitHub', description: 'Trending repos' },
-  { id: 'polymarket' as SourceType, label: '🔮 Polymarket', description: 'Prediction markets' },
-];
-
 export default function Home() {
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const [dataSource, setDataSource] = useState<'live' | 'cached'>('live');
-  const [activeSource, setActiveSource] = useState<SourceType>('asknews');
-  const [validatorKeywords, setValidatorKeywords] = useState<string[]>([]);
-  const [showQRCode, setShowQRCode] = useState(false);
 
   useEffect(() => {
-    fetchNews(activeSource);
-    // Check onboarding on client side
-    if (typeof window !== 'undefined' && !isOnboardingDone()) {
-      setShowOnboarding(true);
-    }
-  }, [activeSource]);
+    fetchNews();
+  }, []);
 
-  const handleSourceChange = (source: SourceType) => {
-    setActiveSource(source);
-    setStories([]);
-    setLoading(true);
-  };
-
-  const fetchNews = async (source: SourceType = 'asknews') => {
+  const fetchNews = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Choose endpoint based on source
-      const endpoint = source === 'asknews' ? '/api/news'
-        : source === 'hackernews' ? '/api/hackernews'
-          : source === 'github' ? '/api/github'
-            : '/api/polymarket?category=tech';
-
-      const res = await fetch(endpoint);
+      // Fetch background context for the AI Diligence Engine
+      const res = await fetch('/api/news');
 
       if (!res.ok) {
         throw new Error(`API error: ${res.status}`);
@@ -236,27 +42,7 @@ export default function Home() {
 
       const data = await res.json();
 
-      // Handle Polymarket predictions differently
-      if (source === 'polymarket') {
-        const predictions = data.predictions || [];
-        const predictionStories: Story[] = predictions.map((p: { id: string; question: string; description?: string; outcomes?: Array<{ name: string; probability: number }>; volume?: string; url?: string }) => ({
-          uuid: p.id,
-          headline: `🔮 ${p.question}`,
-          summary: p.outcomes ?
-            `${p.outcomes.map((o: { name: string; probability: number }) => `${o.name}: ${o.probability}%`).join(' | ')} • Volume: ${p.volume || 'N/A'}` :
-            p.description,
-          sentiment: p.outcomes?.[0]?.probability || 50,
-          coverage: parseInt(p.volume?.replace(/[^0-9.]/g, '') || '0'),
-          url: p.url,
-          categories: ['prediction']
-        }));
-        setStories(predictionStories);
-        setDataSource('live');
-        return;
-      }
-
       if (!data.stories || data.stories.length === 0) {
-        // Try cache fallback
         const cached = getCachedStories() as Story[] | null;
         if (cached && cached.length > 0) {
           setStories(cached);
@@ -274,18 +60,15 @@ export default function Home() {
 
       setStories(validatedStories);
       setDataSource('live');
-      // Cache for offline support
       setCachedStories(validatedStories);
     } catch (err) {
       console.error('Failed to fetch news:', err);
-      // Try cache fallback on error
       const cached = getCachedStories() as Story[] | null;
       if (cached && cached.length > 0) {
         setStories(cached);
         setDataSource('cached');
-        setError('Showing cached data (offline mode)');
       } else {
-        setError('Unable to load news. Please try again.');
+        setError('Unable to load news.');
         setStories([]);
       }
     } finally {
@@ -293,89 +76,8 @@ export default function Home() {
     }
   };
 
-  const handleAlert = async (story: Story) => {
-    try {
-      const res = await fetch('/api/alert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ story, channel: 'slack' }),
-      });
-
-      if (!res.ok) {
-        throw new Error('Alert request failed');
-      }
-
-      // Track alert in history (Phase 2 improvement)
-      addAlertToHistory({
-        storyId: story.uuid,
-        headline: story.headline,
-        timestamp: new Date().toISOString(),
-        channel: 'slack'
-      });
-
-      setAlertMessage(`✅ Alert set for: "${story.headline.slice(0, 50)}..."`);
-      setTimeout(() => setAlertMessage(null), 3000);
-    } catch (err) {
-      setAlertMessage('❌ Failed to set alert');
-      setTimeout(() => setAlertMessage(null), 3000);
-    }
-  };
-
-  // Export filtered stories to CSV (UX improvement)
-  const exportToCsv = () => {
-    const headers = ['Headline', 'Summary', 'Sentiment', 'Coverage', 'Date', 'Categories'];
-    const rows = filteredStories.map(s => [
-      `"${(s.headline || '').replace(/"/g, '""')}"`,
-      `"${(s.summary || '').replace(/"/g, '""')}"`,
-      s.sentiment?.toFixed(2) || '0',
-      s.coverage || '0',
-      s.publish_date || '',
-      (s.categories || []).join('; ')
-    ]);
-
-    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `aicanary-export-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // Dismiss onboarding tooltip
-  const dismissOnboarding = () => {
-    setShowOnboarding(false);
-    markOnboardingDone();
-  };
-
-  // Safe search filter with special character handling (Technical Judge edge case)
-  const escapeRegex = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-  const filteredStories = stories.filter((story) => {
-    if (search === '') return true;
-    const searchLower = search.toLowerCase();
-    const headlineLower = (story.headline || '').toLowerCase();
-    const summaryLower = (story.summary || '').toLowerCase();
-    return headlineLower.includes(searchLower) || summaryLower.includes(searchLower);
-  });
-
   return (
     <div className="min-h-screen py-8 px-4 md:px-8">
-      {/* Onboarding Tooltip (first visit only) */}
-      {showOnboarding && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 glass-card px-6 py-4 z-50 fade-in max-w-md">
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">💡</span>
-            <div>
-              <p className="text-white font-medium mb-1">Welcome to AICanary!</p>
-              <p className="text-gray-400 text-sm">Click ⚡ High Impact stories for early edge on AI launches. Use filters to focus on your domain.</p>
-            </div>
-            <button onClick={dismissOnboarding} className="text-gray-500 hover:text-white">✕</button>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <header className="max-w-4xl mx-auto mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -391,70 +93,18 @@ export default function Home() {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            {/* QR Code Button for Mobile Access */}
-            <button
-              onClick={() => setShowQRCode(true)}
-              className="px-3 py-1.5 text-xs rounded-lg bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 text-purple-300 hover:border-purple-400/50 hover:text-white transition-all"
-            >
-              📱 Mobile
-            </button>
-            {/* Export Button */}
-            <button
-              onClick={exportToCsv}
-              disabled={filteredStories.length === 0}
-              className="px-3 py-1.5 text-xs rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              📤 Export CSV
-            </button>
-            {/* Data Source Indicator */}
             <div className="flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full pulse ${dataSource === 'cached' ? 'bg-yellow-500' : error ? 'bg-yellow-500' : 'bg-green-500'}`}></span>
               <span className="text-sm text-gray-400">
-                {dataSource === 'cached' ? 'Cached' : error ? 'Limited' : 'Live'}
+                {dataSource === 'cached' ? 'Cached' : error ? 'Limited' : 'Live Mode'}
               </span>
             </div>
           </div>
         </div>
-
-        {/* QR Code Modal */}
-        {showQRCode && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center" onClick={() => setShowQRCode(false)}>
-            <div className="bg-gradient-to-b from-gray-900 to-gray-950 border border-white/20 rounded-2xl p-8 max-w-sm mx-4" onClick={e => e.stopPropagation()}>
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-bold text-white mb-2">📱 Scan to Beta Test</h3>
-                <p className="text-gray-400 text-sm">Access AICanary on your mobile device</p>
-              </div>
-              <div className="bg-white p-4 rounded-xl flex items-center justify-center">
-                <QRCodeSVG
-                  value="https://ai-canary-production.up.railway.app"
-                  size={200}
-                  bgColor="#ffffff"
-                  fgColor="#000000"
-                  level="H"
-                />
-              </div>
-              <p className="text-center text-xs text-gray-500 mt-4">ai-canary-production.up.railway.app</p>
-              <button
-                onClick={() => setShowQRCode(false)}
-                className="w-full mt-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        )}
       </header>
-
-      {/* Alert Toast */}
-      {alertMessage && (
-        <div className="fixed top-4 right-4 glass-card px-6 py-4 z-50 fade-in">
-          <p className="text-white font-medium">{alertMessage}</p>
-        </div>
-      )}
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto">
-        {/* Project Validator & Diligence Gate */}
         <ValidatorPanel
           stories={stories.map(s => ({
             id: s.uuid,
@@ -464,108 +114,21 @@ export default function Home() {
             sentimentScore: s.sentiment,
             coverage: s.coverage
           }))}
-          onFilter={(keywords) => setValidatorKeywords(keywords)}
+          onFilter={() => {}}
         />
-
-        {/* Live Market Feeds & Cross-Checks */}
-        <div className="mt-12 pt-8 border-t border-white/10">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-            <div>
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                📡 Live Market Feeds &amp; Reference Signals
-              </h2>
-              <p className="text-gray-400 text-xs mt-0.5">
-                Real-time signals from AskNews, prediction markets, and developer repositories
-              </p>
-            </div>
-          </div>
-
-          <SearchBar value={search} onChange={setSearch} />
-          <QuickFilters activeFilter={search} onSelect={setSearch} />
-
-          {/* Stats Bar */}
-          <div className="grid grid-cols-3 gap-4 my-6">
-            <div className="glass-card p-4 text-center">
-              <p className="text-2xl font-bold text-white">{loading ? '...' : stories.length}</p>
-              <p className="text-xs text-gray-400">Stories Today</p>
-            </div>
-            <div className="glass-card p-4 text-center">
-              <p className="text-2xl font-bold text-green-400">
-                {loading ? '...' : stories.filter(s => (s.sentiment || 0) > 0.3).length}
-              </p>
-              <p className="text-xs text-gray-400">Bullish</p>
-            </div>
-            <div className="glass-card p-4 text-center">
-              <p className="text-2xl font-bold text-red-400">
-                {loading ? '...' : stories.filter(s => (s.sentiment || 0) < -0.3).length}
-              </p>
-              <p className="text-xs text-gray-400">Bearish</p>
-            </div>
-          </div>
-
-          {/* Source Tabs */}
-          <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-            {SOURCE_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => handleSourceChange(tab.id)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${activeSource === tab.id
-                  ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white'
-                  : 'bg-white/5 text-gray-400 hover:bg-white/10'
-                  }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Stories List */}
-          <div className="space-y-4">
-            {loading ? (
-              // Loading skeletons
-              <>
-                <StoryCardSkeleton />
-                <StoryCardSkeleton />
-                <StoryCardSkeleton />
-              </>
-            ) : error && stories.length === 0 ? (
-              // Error state
-              <div className="glass-card p-12 text-center">
-                <div className="text-4xl mb-4">⚠️</div>
-                <p className="text-gray-400 mb-4">{error}</p>
-                <button
-                  onClick={() => fetchNews(activeSource)}
-                  className="glow-btn py-2 px-6 text-sm"
-                >
-                  🔄 Retry
-                </button>
-              </div>
-            ) : filteredStories.length === 0 ? (
-              <div className="glass-card p-12 text-center">
-                <p className="text-gray-400">No stories found for &quot;{search}&quot;</p>
-              </div>
-            ) : (
-              filteredStories.map((story, index) => (
-                <div key={story.uuid} style={{ animationDelay: `${index * 0.1}s` }}>
-                  <StoryCard story={story} onAlert={handleAlert} />
-                </div>
-              ))
-            )}
-          </div>
-        </div>
 
         {/* Institutional Footer */}
         <footer className="mt-16 text-center text-gray-500 text-sm">
           <div className="glass-card p-4 mb-4 inline-block">
             <div className="flex items-center justify-center gap-6">
               <div className="text-center">
-                <span className="text-indigo-400 font-semibold">AskNews Live Feed</span>
-                <p className="text-xs text-gray-500">{stories.length} indexed signals • Real-time sentiment</p>
+                <span className="text-indigo-400 font-semibold">Background Knowledge Graph</span>
+                <p className="text-xs text-gray-500">{stories.length} real-time indexed signals</p>
               </div>
               <div className="w-px h-8 bg-gray-700"></div>
               <div className="text-center">
                 <span className="text-purple-400 font-semibold">Frontier Engine</span>
-                <p className="text-xs text-gray-500">Llama 3.3 70B • Deterministic Admission Control</p>
+                <p className="text-xs text-gray-500">Claude 3.5 Sonnet • Deterministic Admission Control</p>
               </div>
             </div>
           </div>
