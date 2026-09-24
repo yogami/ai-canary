@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AICanary - Real-Time AI Ecosystem Intelligence",
-  description: "Never miss a market shift. Monitor competitor launches, new models, and AI ecosystem trends in real-time.",
+  title: "AICanary: Deterministic Admission Control & Diligence Engine",
+  description: "Deterministic venture diligence engine. Isolates unphysical claims into contradiction quarantine, performs causal sensitivity stress testing, and generates Investment Committee punch-lists.",
 };
 
 export default function RootLayout({
