@@ -101,7 +101,7 @@ interface AnalysisResult {
     // CB Insights-inspired features
     canaryScore?: CanaryScore;
     swotAnalysis?: SwotAnalysis;
-    // Extantia & Venture Due Diligence Gate
+    // Institutional Due Diligence Gate
     agenticDiligence?: AgenticDiligence;
     // Producer Panel (Film/TV only)
     producerPanel?: ProducerEvaluation[];
@@ -632,7 +632,7 @@ Claimed Performance & Economics:
                                     }}
                                     className="w-full text-left px-4 py-3 text-sm text-emerald-300 hover:bg-emerald-900/30 border-b border-emerald-500/20"
                                 >
-                                    ⚡ SunHydrogen AEM (Climate / Extantia)
+                                    ⚡ SunHydrogen AEM (CleanTech / Green H₂)
                                 </button>
                                 <button
                                     onClick={() => {
@@ -664,7 +664,7 @@ Claimed Performance & Economics:
                                     }}
                                     className="w-full text-left px-4 py-3 text-sm text-emerald-300 hover:bg-emerald-900/30 border-b border-emerald-500/20"
                                 >
-                                    🧱 CarbonLock Slag (Climate / Extantia)
+                                    🧱 CarbonLock Slag (CleanTech / Mineralization)
                                 </button>
                                 <button
                                     onClick={() => {
@@ -1235,7 +1235,7 @@ Core Innovation: VIAP (Visual-Inertial Anchor Protocol)
                                         </p>
                                     </div>
                                     <span className="px-3 py-1 text-xs rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-200 font-medium">
-                                        Extantia Diligence Protocol
+                                        Institutional Diligence Protocol
                                     </span>
                                 </div>
 
@@ -1339,7 +1339,7 @@ Core Innovation: VIAP (Visual-Inertial Anchor Protocol)
                                     <div className="bg-gradient-to-r from-indigo-950/40 to-slate-900/60 border border-indigo-500/30 rounded-xl p-4">
                                         <div className="flex items-center justify-between mb-3">
                                             <h4 className="text-indigo-300 font-semibold text-sm flex items-center gap-2">
-                                                🎯 Investment Committee Punch-List (The Extantia 3)
+                                                🎯 Investment Committee Punch-List (The IC 3)
                                             </h4>
                                             <span className="text-[10px] text-gray-400">Meeting #1 Interrogation Protocol</span>
                                         </div>

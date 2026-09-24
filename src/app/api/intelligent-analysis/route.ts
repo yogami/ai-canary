@@ -203,7 +203,7 @@ Provide a JSON response matching this schema:
   "recommendation": "Strategic guidance for the producers"
 }`;
         } else if (safeNiche === 'climate') {
-            systemPrompt = `You are an investment partner at Extantia Capital, an elite European climate venture capital fund. Your task is to conduct deep, rigorous technical and economic due diligence on this clean-tech pitch.
+            systemPrompt = `You are a deep-tech venture investment partner conducting rigorous technical and economic due diligence on this clean-tech pitch.
 
 You hold founders to the highest scientific standards:
 1. THERMODYNAMICS & PHYSICS: Does this claim violate the conservation of energy or realistic cell/reaction efficiencies?
@@ -213,7 +213,7 @@ You hold founders to the highest scientific standards:
    - Identify which founder assertions are plausible or verified by physical laws.
    - Quarantine assertions that contradict thermodynamic limits or standard industrial benchmarks.
 5. CAUSAL SENSITIVITY: Identify the single critical operational assumption and stress test it against realistic price shocks.
-6. EXTANTIA IC PUNCH-LIST: 3 sharp, technical questions designed for the investment committee to expose operational risk in meeting #1.`;
+6. INVESTMENT COMMITTEE PUNCH-LIST: 3 sharp, technical questions designed for the investment committee to expose operational risk in meeting #1.`;
 
             userPrompt = `## CLEAN-TECH PITCH TO AUDIT:
 ${sanitizedDescription}
