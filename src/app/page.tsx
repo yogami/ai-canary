@@ -377,26 +377,20 @@ export default function Home() {
       )}
 
       {/* Header */}
-      <header className="max-w-4xl mx-auto mb-12">
-        <div className="flex items-center justify-between mb-6">
+      <header className="max-w-4xl mx-auto mb-8">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-4xl font-bold gradient-text mb-2">
               AICanary
             </h1>
-            <p className="text-gray-400">
-              Real-time AI ecosystem intelligence • Never miss a market shift
+            <p className="text-gray-300 font-medium">
+              Deterministic Admission Control &amp; Diligence Engine
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Stress-testing early-stage venture claims against physical limits, levelized cost models, and live market signals
             </p>
           </div>
           <div className="flex items-center gap-4">
-            {/* Demo Video Link */}
-            <a
-              href="https://res.cloudinary.com/djol0rpn5/video/upload/v1770310961/aicanary/demos/demo_video_2026_02_05.mp4"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-1.5 text-xs rounded-lg bg-gradient-to-r from-rose-600/20 to-pink-600/20 border border-rose-500/30 text-rose-300 hover:border-rose-400/50 hover:text-white transition-all flex items-center gap-1"
-            >
-              🎬 Watch Demo
-            </a>
             {/* QR Code Button for Mobile Access */}
             <button
               onClick={() => setShowQRCode(true)}
@@ -449,9 +443,6 @@ export default function Home() {
             </div>
           </div>
         )}
-
-        <SearchBar value={search} onChange={setSearch} />
-        <QuickFilters activeFilter={search} onSelect={setSearch} />
       </header>
 
       {/* Alert Toast */}
@@ -463,43 +454,7 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto">
-        {/* Stats Bar */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="glass-card p-4 text-center">
-            <p className="text-2xl font-bold text-white">{loading ? '...' : stories.length}</p>
-            <p className="text-xs text-gray-400">Stories Today</p>
-          </div>
-          <div className="glass-card p-4 text-center">
-            <p className="text-2xl font-bold text-green-400">
-              {loading ? '...' : stories.filter(s => (s.sentiment || 0) > 0.3).length}
-            </p>
-            <p className="text-xs text-gray-400">Bullish</p>
-          </div>
-          <div className="glass-card p-4 text-center">
-            <p className="text-2xl font-bold text-red-400">
-              {loading ? '...' : stories.filter(s => (s.sentiment || 0) < -0.3).length}
-            </p>
-            <p className="text-xs text-gray-400">Bearish</p>
-          </div>
-        </div>
-
-        {/* Source Tabs */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          {SOURCE_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleSourceChange(tab.id)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${activeSource === tab.id
-                ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white'
-                : 'bg-white/5 text-gray-400 hover:bg-white/10'
-                }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Project Validator Panel */}
+        {/* Project Validator & Diligence Gate */}
         <ValidatorPanel
           stories={stories.map(s => ({
             id: s.uuid,
@@ -512,57 +467,109 @@ export default function Home() {
           onFilter={(keywords) => setValidatorKeywords(keywords)}
         />
 
-        {/* Stories List */}
-        <div className="space-y-4">
-          {loading ? (
-            // Loading skeletons (Technical Judge feedback)
-            <>
-              <StoryCardSkeleton />
-              <StoryCardSkeleton />
-              <StoryCardSkeleton />
-            </>
-          ) : error && stories.length === 0 ? (
-            // Error state (Technical Judge feedback)
-            <div className="glass-card p-12 text-center">
-              <div className="text-4xl mb-4">⚠️</div>
-              <p className="text-gray-400 mb-4">{error}</p>
+        {/* Live Market Feeds & Cross-Checks */}
+        <div className="mt-12 pt-8 border-t border-white/10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                📡 Live Market Feeds &amp; Reference Signals
+              </h2>
+              <p className="text-gray-400 text-xs mt-0.5">
+                Real-time signals from AskNews, prediction markets, and developer repositories
+              </p>
+            </div>
+          </div>
+
+          <SearchBar value={search} onChange={setSearch} />
+          <QuickFilters activeFilter={search} onSelect={setSearch} />
+
+          {/* Stats Bar */}
+          <div className="grid grid-cols-3 gap-4 my-6">
+            <div className="glass-card p-4 text-center">
+              <p className="text-2xl font-bold text-white">{loading ? '...' : stories.length}</p>
+              <p className="text-xs text-gray-400">Stories Today</p>
+            </div>
+            <div className="glass-card p-4 text-center">
+              <p className="text-2xl font-bold text-green-400">
+                {loading ? '...' : stories.filter(s => (s.sentiment || 0) > 0.3).length}
+              </p>
+              <p className="text-xs text-gray-400">Bullish</p>
+            </div>
+            <div className="glass-card p-4 text-center">
+              <p className="text-2xl font-bold text-red-400">
+                {loading ? '...' : stories.filter(s => (s.sentiment || 0) < -0.3).length}
+              </p>
+              <p className="text-xs text-gray-400">Bearish</p>
+            </div>
+          </div>
+
+          {/* Source Tabs */}
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+            {SOURCE_TABS.map((tab) => (
               <button
-                onClick={() => fetchNews(activeSource)}
-                className="glow-btn py-2 px-6 text-sm"
+                key={tab.id}
+                onClick={() => handleSourceChange(tab.id)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${activeSource === tab.id
+                  ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white'
+                  : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                  }`}
               >
-                🔄 Retry
+                {tab.label}
               </button>
-            </div>
-          ) : filteredStories.length === 0 ? (
-            <div className="glass-card p-12 text-center">
-              <p className="text-gray-400">No stories found for &quot;{search}&quot;</p>
-            </div>
-          ) : (
-            filteredStories.map((story, index) => (
-              <div key={story.uuid} style={{ animationDelay: `${index * 0.1}s` }}>
-                <StoryCard story={story} onAlert={handleAlert} />
+            ))}
+          </div>
+
+          {/* Stories List */}
+          <div className="space-y-4">
+            {loading ? (
+              // Loading skeletons
+              <>
+                <StoryCardSkeleton />
+                <StoryCardSkeleton />
+                <StoryCardSkeleton />
+              </>
+            ) : error && stories.length === 0 ? (
+              // Error state
+              <div className="glass-card p-12 text-center">
+                <div className="text-4xl mb-4">⚠️</div>
+                <p className="text-gray-400 mb-4">{error}</p>
+                <button
+                  onClick={() => fetchNews(activeSource)}
+                  className="glow-btn py-2 px-6 text-sm"
+                >
+                  🔄 Retry
+                </button>
               </div>
-            ))
-          )}
+            ) : filteredStories.length === 0 ? (
+              <div className="glass-card p-12 text-center">
+                <p className="text-gray-400">No stories found for &quot;{search}&quot;</p>
+              </div>
+            ) : (
+              filteredStories.map((story, index) => (
+                <div key={story.uuid} style={{ animationDelay: `${index * 0.1}s` }}>
+                  <StoryCard story={story} onAlert={handleAlert} />
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
-        {/* Footer with Sponsor Badge (Perplexity strategic recommendation) */}
+        {/* Institutional Footer */}
         <footer className="mt-16 text-center text-gray-500 text-sm">
           <div className="glass-card p-4 mb-4 inline-block">
-            <p className="text-xs text-gray-400 mb-2">Powered by</p>
             <div className="flex items-center justify-center gap-6">
               <div className="text-center">
-                <span className="text-indigo-400 font-semibold">AskNews</span>
-                <p className="text-xs text-gray-500">{stories.length} stories • RAG + Sentiment</p>
+                <span className="text-indigo-400 font-semibold">AskNews Live Feed</span>
+                <p className="text-xs text-gray-500">{stories.length} indexed signals • Real-time sentiment</p>
               </div>
               <div className="w-px h-8 bg-gray-700"></div>
               <div className="text-center">
-                <span className="text-purple-400 font-semibold">ActivePieces</span>
-                <p className="text-xs text-gray-500">Webhook Alerts</p>
+                <span className="text-purple-400 font-semibold">Frontier Engine</span>
+                <p className="text-xs text-gray-500">Llama 3.3 70B • Deterministic Admission Control</p>
               </div>
             </div>
           </div>
-          <p>Built with 💜 at AI Hackday Berlin • Feb 2026</p>
+          <p className="text-xs text-gray-500">AICanary Institutional Diligence Protocol • Verified Physics &amp; Causal Sensitivity</p>
         </footer>
       </main>
     </div>
