@@ -41,7 +41,7 @@ test.describe('AICanary Diligence Engine: Carlota Acceptance Suite', () => {
         const textarea = page.locator('textarea');
         const content = await textarea.inputValue();
         expect(content).toContain('Project Nikola');
-        expect(content).toContain('sub-$1.00/kg');
+        expect(content).toContain('under $1.00/kg');
         expect(content).toContain('dedicated direct solar PV arrays');
 
         // Verify context fields populated
