@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-const ASKNEWS_API_KEY = process.env.ASKNEWS_API_KEY || 'ank_X091CjvzeqRC7NWtRO4KqvsvftxpsJMcJ1tN02ipAb';
+const ASKNEWS_API_KEY = process.env.ASKNEWS_API_KEY;
 
 interface AskNewsStory {
     uuid: string;

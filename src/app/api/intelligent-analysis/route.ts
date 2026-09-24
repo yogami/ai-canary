@@ -15,65 +15,8 @@ interface IntelligentAnalysisRequest {
     niche?: string;
 }
 
-// Rate limiting: protect API budget
-const RATE_LIMIT_MAX = 30; // Max analyses per IP per hour
-const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour in ms
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-
-function checkRateLimit(ip: string): { allowed: boolean; remaining: number; resetIn: number } {
-    const now = Date.now();
-    const record = rateLimitStore.get(ip);
-
-    if (!record || now > record.resetTime) {
-        rateLimitStore.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-        return { allowed: true, remaining: RATE_LIMIT_MAX - 1, resetIn: RATE_LIMIT_WINDOW };
-    }
-
-    if (record.count >= RATE_LIMIT_MAX) {
-        return { allowed: false, remaining: 0, resetIn: record.resetTime - now };
-    }
-
-    record.count++;
-    return { allowed: true, remaining: RATE_LIMIT_MAX - record.count, resetIn: record.resetTime - now };
-}
-
-// Prompt Injection Protection
-const INJECTION_PATTERNS = [
-    /ignore\s+(previous|above|all)\s+(instructions?|prompts?)/i,
-    /disregard\s+(previous|above|all)/i,
-    /forget\s+(everything|all|previous)/i,
-    /you\s+are\s+now\s+a/i,
-    /act\s+as\s+(if|a|an)/i,
-    /pretend\s+(to\s+be|you\s+are)/i,
-    /new\s+instructions?:/i,
-    /system\s*:\s*/i,
-    /\[INST\]/i,
-    /\[\/?SYS(TEM)?\]/i,
-    /<\|im_start\|>/i,
-    /```\s*(system|assistant|user)/i,
-    /override\s+(the\s+)?system/i,
-    /bypass\s+(security|filters?|restrictions?)/i,
-];
-
-const MAX_PROJECT_DESC_LENGTH = 5000;
-const MAX_STORY_COUNT = 30;
-
-function sanitizeInput(text: string): string {
-    if (!text || typeof text !== 'string') return '';
-    let sanitized = text.slice(0, MAX_PROJECT_DESC_LENGTH);
-    sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-    sanitized = sanitized.replace(/```/g, '`‌`‌`');
-    return sanitized.trim();
-}
-
-function detectInjection(text: string): { isInjection: boolean; pattern?: string } {
-    for (const pattern of INJECTION_PATTERNS) {
-        if (pattern.test(text)) {
-            return { isInjection: true, pattern: pattern.source };
-        }
-    }
-    return { isInjection: false };
-}
+import { checkRateLimit, RATE_LIMIT_MAX } from '@/lib/rate-limiter';
+import { sanitizeInput, detectInjection, MAX_STORY_COUNT } from '@/lib/input-validator';
 
 export async function POST(request: Request) {
     try {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // GitHub Ecosystem Intelligence API
 // Provides MARKET intelligence, not code quality analysis
-// - Competitive landscape: similar repos, top competitors
+// - Competitive environment: similar repos, top competitors
 // - Market timing: is this space emerging, growing, or saturated?
 // - Ecosystem health: community momentum and trends
 
