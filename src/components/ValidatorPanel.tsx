@@ -78,6 +78,19 @@ interface BrutalRealityCheck {
     };
 }
 
+interface AgenticDiligence {
+    quarantine?: {
+        verifiedClaims?: Array<{ claim: string; basis: string; status: 'VERIFIED' | 'PLAUSIBLE' }>;
+        quarantinedAssertions?: Array<{ assertion: string; contradiction: string; severity: 'CRITICAL' | 'WARNING' }>;
+    };
+    causalSensitivity?: {
+        criticalAssumption?: string;
+        stressScenarios?: Array<{ parameter: string; shift: string; impact: string }>;
+        breakEvenThreshold?: string;
+    };
+    icPunchList?: Array<{ question: string; targetRisk: string; whyItExposesFraud: string }>;
+}
+
 interface AnalysisResult {
     threats: Array<{ storyIndex: number; reason: string; story?: Story }>;
     opportunities: Array<{ storyIndex: number; reason: string; story?: Story }>;
@@ -88,10 +101,12 @@ interface AnalysisResult {
     // CB Insights-inspired features
     canaryScore?: CanaryScore;
     swotAnalysis?: SwotAnalysis;
+    // Extantia & Venture Due Diligence Gate
+    agenticDiligence?: AgenticDiligence;
     // Producer Panel (Film/TV only)
     producerPanel?: ProducerEvaluation[];
     consensusScore?: number;
-    // Brutal Reality Check (AI/Tech only)
+    // Brutal Reality Check
     brutalRealityCheck?: BrutalRealityCheck;
 }
 
@@ -276,7 +291,7 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
     }
     const [appAuditResults, setAppAuditResults] = useState<AppAuditResult | null>(null);
 
-    // Ecosystem Intelligence state - market signals from GitHub landscape
+    // Ecosystem Intelligence state: market signals from GitHub ecosystem
     interface EcosystemIntelResult {
         searchQuery: string;
         totalRepos: number;
@@ -495,7 +510,7 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                         })
                         .catch(err => console.log('App Audit check failed:', err));
 
-                    // Run Ecosystem Intelligence (competitive landscape from GitHub)
+                    // Run Ecosystem Intelligence (competitive overview from GitHub)
                     fetch('/api/ecosystem-intel', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -586,66 +601,129 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                             >
                                 📋 Demo Examples
                             </button>
-                            <div id="demo-dropdown" className="hidden absolute right-0 top-8 z-50 w-64 bg-gray-900 border border-emerald-500/30 rounded-xl shadow-xl overflow-hidden">
+                            <div id="demo-dropdown" className="hidden absolute right-0 top-8 z-50 w-72 bg-gray-900 border border-emerald-500/30 rounded-xl shadow-xl overflow-hidden">
                                 <button
                                     onClick={() => {
-                                        setProjectDescription(`Microcatchment Pro: High-Level Summary
+                                        setSelectedNiche('climate');
+                                        setContextFields({
+                                            sector: 'Energy & Heavy Industry',
+                                            region: 'Europe',
+                                            impactMetric: '120,000 t CO2/yr avoided',
+                                            targetAudience: 'Steelmakers, chemical plants, off-grid power developers'
+                                        });
+                                        setProjectDescription(`Project SunHydrogen: High-Efficiency AEM Electrolyzer
 
-The Problem
-Stormwater infrastructure is failing. Cities face increasing flood risks, yet understanding where water actually flows on a property or site remains expensive and inaccessible:
+The Problem:
+Current green hydrogen production costs €4.50-7.00/kg, far above the grey hydrogen fossil baseline of €1.50/kg. Existing PEM electrolyzers depend on scarce platinum group metals (iridium, platinum) and degrade rapidly under fluctuating renewable electricity.
 
-Traditional surveys cost €5,000-15,000 for professional LiDAR or drone mapping
-GPS alone is inaccurate (5-15m error) - useless for micro-drainage patterns
-No DIY option exists for property owners, farmers, or small municipalities to affordably map their land's hydrology
+Our Solution:
+SunHydrogen develops modular Anion Exchange Membrane (AEM) water electrolysis stacks targeting unsubsidized green hydrogen at €1.80/kg.
 
-Our Solution
+Core Innovation:
+- Zero Platinum Group Metals: Proprietary nickel-iron layered double hydroxide (NiFe-LDH) anode catalysts and cobalt-free cathode.
+- Hydrocarbon Ionomer: Chemically stable anion exchange membrane operating at 60°C and 30 bar differential pressure without expensive fluorine chemistry.
+- 78% Higher Heating Value (HHV) system efficiency (43 kWh/kg H2 electrical consumption).
+
+Claimed Performance & Economics:
+- Stack CapEx of €250/kW at 100 MW annual production scale.
+- 80,000 operational hours stack lifetime with less than 1.5% cell degradation per 1,000 hours under intermittent solar/wind direct feeds.
+- Direct solar PV coupling without intermediate battery buffering.`);
+                                        document.getElementById('demo-dropdown')?.classList.add('hidden');
+                                    }}
+                                    className="w-full text-left px-4 py-3 text-sm text-emerald-300 hover:bg-emerald-900/30 border-b border-emerald-500/20"
+                                >
+                                    ⚡ SunHydrogen AEM (Climate / Extantia)
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setSelectedNiche('climate');
+                                        setContextFields({
+                                            sector: 'Construction Materials',
+                                            region: 'Europe & North America',
+                                            impactMetric: '320 kg CO2 / t concrete',
+                                            targetAudience: 'Precast concrete plants, structural contractors'
+                                        });
+                                        setProjectDescription(`CarbonLock Materials: Slag Mineralization for Precast Concrete
+
+The Problem:
+Standard Ordinary Portland Cement (OPC) is responsible for 8% of global greenhouse gas emissions. Clean alternatives require high curing heat or exotic chemicals that increase costs by 30-50%.
+
+Our Solution:
+CarbonLock sequesters industrial flue-gas CO2 directly into precast structural concrete using industrial steel slag and ground granulated blast-furnace slag (GGBFS).
+
+Core Innovation:
+- Accelerated Aqueous Carbonation: Consumes raw, unpurified flue gas (12-15% CO2) at ambient temperature and pressure.
+- Cement Clinker Displacement: Replaces 70% of standard Portland cement clinker while achieving 50 MPa 28-day compressive strength.
+- Permanent Thermodynamic Mineralization: Traps CO2 as stable calcium and magnesium carbonates with 1,000+ year permanence.
+
+Claimed Performance & Economics:
+- Net carbon negative: Permanently traps 320 kg CO2 per metric tonne of precast concrete.
+- Green premium under 3% compared to standard European C30/37 structural precast beams.
+- Certified compliant with European EN 206 and ASTM C150 durability standards.`);
+                                        document.getElementById('demo-dropdown')?.classList.add('hidden');
+                                    }}
+                                    className="w-full text-left px-4 py-3 text-sm text-emerald-300 hover:bg-emerald-900/30 border-b border-emerald-500/20"
+                                >
+                                    🧱 CarbonLock Slag (Climate / Extantia)
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setSelectedNiche('ai');
+                                        setContextFields({
+                                            appUrl: 'https://agent-trust-protocol-production.up.railway.app',
+                                            githubUrl: 'https://github.com/yogami/agent-kernel',
+                                            targetAudience: 'Autonomous agent engineers, enterprise AI compliance teams',
+                                            competitors: 'LangChain, AutoGen, CrewAI'
+                                        });
+                                        setProjectDescription(`KernelGuard: Deterministic Agent Trust & Truth Quarantine Harness
+
+The Problem:
+Frontier LLM agents hallucinate and make unauthorized state updates in autonomous workflows. Existing frameworks (LangChain, AutoGen) provide prompt abstractions but lack deterministic operational boundaries, leading to catastrophic failure in enterprise production.
+
+Our Solution:
+KernelGuard is a deterministic execution harness and truth quarantine layer that isolates raw LLM reasoning from permanent operational state.
+
+Core Innovation:
+- Tri-State Operational Machine: Separates uncommitted workspace context from institutional truth using deterministic policy gates.
+- Memory & Contradiction Quarantine: Intercepts and validates candidate claims against verified schemas before permitting long-term memory promotions.
+- Causal Sensitivity Gate: Enforces state and token budgets, terminating run-away agent loops with deterministic tripwires.
+
+Value Proposition & Metrics:
+- Zero unauthorized memory mutations on production pipelines.
+- Verifiable cryptographic audit trail for enterprise regulatory compliance and security reviews.`);
+                                        document.getElementById('demo-dropdown')?.classList.add('hidden');
+                                    }}
+                                    className="w-full text-left px-4 py-3 text-sm text-emerald-300 hover:bg-emerald-900/30 border-b border-emerald-500/20"
+                                >
+                                    🤖 KernelGuard (Agent Trust Harness)
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setSelectedNiche('climate');
+                                        setContextFields({
+                                            sector: 'Water & Urban Infrastructure',
+                                            region: 'Europe & Global',
+                                            impactMetric: 'Stormwater runoff mitigation',
+                                            targetAudience: 'Municipalities, farmers, land surveyors'
+                                        });
+                                        setProjectDescription(`Microcatchment Pro: Smartphone Field Surveying Tool
+
+The Problem:
+Stormwater infrastructure is failing. Cities face increasing flood risks, yet understanding where water actually flows on a property or site remains expensive and inaccessible. Traditional surveys cost €5,000-15,000 for LiDAR or drone mapping, while standalone smartphone GPS has a 5-15m error margin.
+
+Our Solution:
 Microcatchment Pro is a smartphone-based field surveying tool that enables anyone to create engineering-grade site maps by walking the perimeter of an area.
 
 Core Innovation: VIAP (Visual-Inertial Anchor Protocol)
-
-Screen 1 (Planning): User plots approximate boundary on satellite map
-Screen 2 (Scanning): User physically walks to each anchor point and "snaps" their precise GPS position
-Sensor Fusion: Combines GPS (global accuracy) + IMU (local precision) + Camera (visual verification)
-Output: Precise boundary polygon, calculated area, coverage heatmap
-
-Why This Works
-Challenge	Our Solution
-GPS is bouncy (±10m)	Sequential anchor snapping calibrates IMU scale
-Expensive equipment	Smartphone sensors only
-Complex software	Guided "walk to Anchor #1, #2..." workflow
-Data sovereignty	All processing on-device, data stays local
-
-Target Use Cases
-Farmers: Map drainage patterns before installing irrigation
-Property owners: Document land before construction permits
-Small municipalities: Audit stormwater infrastructure at 1/100th cost
-Environmental consultants: Quick site reconnaissance
-
-Status
-The app currently handles boundary definition and anchor calibration. The next phase is coverage surveying - walking the interior while the app tracks your path and builds a coverage heatmap of the surveyed area.`);
-                                        document.getElementById('demo-dropdown')?.classList.add('hidden');
-                                    }}
-                                    className="w-full text-left px-4 py-3 text-sm text-emerald-300 hover:bg-emerald-900/30 border-b border-emerald-500/20"
-                                >
-                                    🌊 Microcatchment Pro
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setProjectDescription(`AI-powered code review tool that uses machine learning to detect bugs, security vulnerabilities, and code quality issues before deployment. Integrates with GitHub/GitLab.`);
-                                        document.getElementById('demo-dropdown')?.classList.add('hidden');
-                                    }}
-                                    className="w-full text-left px-4 py-3 text-sm text-emerald-300 hover:bg-emerald-900/30 border-b border-emerald-500/20"
-                                >
-                                    🤖 AI Code Review Tool
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setProjectDescription(`SaaS platform for indie game developers to A/B test game mechanics, monetization strategies, and user onboarding flows without writing code.`);
+- Boundary Planning: User plots approximate boundary on satellite imagery.
+- Anchor Snapping: User physically walks to anchor points and snaps precise positions.
+- Sensor Fusion: Combines GPS global positioning with IMU local precision and camera visual verification.
+- Output: Precise boundary polygon, calculated area, coverage heatmap.`);
                                         document.getElementById('demo-dropdown')?.classList.add('hidden');
                                     }}
                                     className="w-full text-left px-4 py-3 text-sm text-emerald-300 hover:bg-emerald-900/30"
                                 >
-                                    🎮 Game Dev A/B Testing
+                                    🌊 Microcatchment Pro (Stormwater)
                                 </button>
                             </div>
                         </div>
@@ -658,7 +736,7 @@ The app currently handles boundary definition and anchor calibration. The next p
                     />
                 </div>
 
-                {/* Dynamic Context Fields based on selected niche */}
+                {/* Context Fields based on selected niche */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {currentNiche.fields.map((field) => (
                         <div key={field.key}>
@@ -914,13 +992,13 @@ The app currently handles boundary definition and anchor calibration. The next p
                             </div>
                         )}
 
-                        {/* 🌍 ECOSYSTEM INTELLIGENCE - Competitive Landscape from GitHub */}
+                        {/* 🌍 ECOSYSTEM INTELLIGENCE: Competitive Overview from GitHub */}
                         {ecosystemResults && (
                             <div className="space-y-4 bg-gradient-to-b from-emerald-900/30 to-emerald-950/50 border-2 border-emerald-500/50 rounded-2xl p-5">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-xl font-bold text-emerald-400 flex items-center gap-2">
                                         🌍 Ecosystem Intel
-                                        <span className="text-xs font-normal text-emerald-300/60 ml-2">Market landscape</span>
+                                        <span className="text-xs font-normal text-emerald-300/60 ml-2">Market overview</span>
                                     </h3>
                                     <div className={`px-4 py-2 rounded-xl font-bold text-lg ${ecosystemResults.marketSignal === 'EMERGING' ? 'bg-green-500/20 text-green-400 border-2 border-green-500/40' :
                                         ecosystemResults.marketSignal === 'GROWING' ? 'bg-blue-500/20 text-blue-400 border-2 border-blue-500/40' :
@@ -1141,6 +1219,154 @@ The app currently handles boundary definition and anchor calibration. The next p
                                         <p className="text-gray-400 text-xs">{intelligentResults.canaryScore.factors.defensibility?.reasoning}</p>
                                     </div>
                                 </div>
+                            </div>
+                        )}
+
+                        {/* 🛡️ INSTITUTIONAL TRUTH & CONTRADICTION QUARANTINE */}
+                        {intelligentResults.agenticDiligence && (
+                            <div className="space-y-4 bg-gradient-to-b from-slate-900/60 to-purple-950/40 border-2 border-purple-500/40 rounded-2xl p-5 shadow-xl">
+                                <div className="flex items-center justify-between border-b border-purple-500/20 pb-3">
+                                    <div>
+                                        <h3 className="text-xl font-bold text-purple-300 flex items-center gap-2">
+                                            🛡️ Institutional Truth & Contradiction Quarantine
+                                        </h3>
+                                        <p className="text-xs text-gray-400 mt-0.5">
+                                            Venture diligence gate: physical boundaries, levelized cost models, and counter-case red-teaming
+                                        </p>
+                                    </div>
+                                    <span className="px-3 py-1 text-xs rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-200 font-medium">
+                                        Extantia Diligence Protocol
+                                    </span>
+                                </div>
+
+                                {/* 1. Truth & Contradiction Quarantine */}
+                                {intelligentResults.agenticDiligence.quarantine && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Verified Claims */}
+                                        <div className="bg-emerald-950/30 border border-emerald-500/30 rounded-xl p-4">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <h4 className="text-emerald-400 font-semibold text-sm flex items-center gap-2">
+                                                    <span>✅ Verified & Plausible Claims</span>
+                                                </h4>
+                                                <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
+                                                    Truth Gate Passed
+                                                </span>
+                                            </div>
+                                            <div className="space-y-2.5">
+                                                {intelligentResults.agenticDiligence.quarantine.verifiedClaims?.map((item, idx) => (
+                                                    <div key={idx} className="bg-emerald-900/20 border border-emerald-500/20 rounded-lg p-2.5">
+                                                        <p className="text-white text-xs font-medium">{item.claim}</p>
+                                                        <p className="text-emerald-300/80 text-[11px] mt-1 flex items-start gap-1">
+                                                            <span className="text-emerald-400 font-bold">Basis:</span> {item.basis}
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Quarantined Assertions */}
+                                        <div className="bg-amber-950/30 border border-amber-500/40 rounded-xl p-4">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <h4 className="text-amber-400 font-semibold text-sm flex items-center gap-2">
+                                                    <span>🚨 Quarantined Assertions</span>
+                                                </h4>
+                                                <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">
+                                                    Contradiction Flagged
+                                                </span>
+                                            </div>
+                                            <div className="space-y-2.5">
+                                                {intelligentResults.agenticDiligence.quarantine.quarantinedAssertions?.map((item, idx) => (
+                                                    <div key={idx} className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-2.5">
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <p className="text-white text-xs font-medium">{item.assertion}</p>
+                                                            <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${item.severity === 'CRITICAL' ? 'bg-red-500/30 text-red-300 border border-red-500/40' : 'bg-yellow-500/30 text-yellow-300 border border-yellow-500/40'}`}>
+                                                                {item.severity}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-amber-300/90 text-[11px] mt-1 flex items-start gap-1">
+                                                            <span className="text-red-400 font-bold">Conflict:</span> {item.contradiction}
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 2. Causal Sensitivity & Red-Teaming */}
+                                {intelligentResults.agenticDiligence.causalSensitivity && (
+                                    <div className="bg-black/40 border border-purple-500/30 rounded-xl p-4 space-y-3">
+                                        <div className="flex items-center justify-between flex-wrap gap-2">
+                                            <h4 className="text-purple-300 font-semibold text-sm flex items-center gap-2">
+                                                ⚡ Causal Sensitivity & Counter-Case Red-Teaming
+                                            </h4>
+                                            {intelligentResults.agenticDiligence.causalSensitivity.breakEvenThreshold && (
+                                                <div className="text-xs bg-purple-900/40 border border-purple-500/40 text-purple-200 px-3 py-1 rounded-full">
+                                                    <span className="text-gray-400">Break-Even Limit:</span> <strong className="text-white">{intelligentResults.agenticDiligence.causalSensitivity.breakEvenThreshold}</strong>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {intelligentResults.agenticDiligence.causalSensitivity.criticalAssumption && (
+                                            <div className="bg-purple-950/40 border border-purple-500/30 rounded-lg p-3">
+                                                <p className="text-[11px] uppercase tracking-wider text-purple-400 font-bold mb-1">Critical Linchpin Assumption</p>
+                                                <p className="text-white text-xs">{intelligentResults.agenticDiligence.causalSensitivity.criticalAssumption}</p>
+                                            </div>
+                                        )}
+
+                                        {intelligentResults.agenticDiligence.causalSensitivity.stressScenarios && (
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                {intelligentResults.agenticDiligence.causalSensitivity.stressScenarios.map((scenario, idx) => (
+                                                    <div key={idx} className="bg-slate-900/60 border border-slate-700/60 rounded-lg p-3 flex flex-col justify-between">
+                                                        <div>
+                                                            <p className="text-slate-300 text-xs font-semibold">{scenario.parameter}</p>
+                                                            <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded bg-red-500/20 text-red-300 font-medium border border-red-500/30">
+                                                                Shift: {scenario.shift}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-gray-300 text-xs mt-2 pt-2 border-t border-slate-800">
+                                                            <span className="text-amber-400 font-medium">Impact:</span> {scenario.impact}
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* 3. Investment Committee Punch-List */}
+                                {intelligentResults.agenticDiligence.icPunchList && intelligentResults.agenticDiligence.icPunchList.length > 0 && (
+                                    <div className="bg-gradient-to-r from-indigo-950/40 to-slate-900/60 border border-indigo-500/30 rounded-xl p-4">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h4 className="text-indigo-300 font-semibold text-sm flex items-center gap-2">
+                                                🎯 Investment Committee Punch-List (The Extantia 3)
+                                            </h4>
+                                            <span className="text-[10px] text-gray-400">Meeting #1 Interrogation Protocol</span>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {intelligentResults.agenticDiligence.icPunchList.map((ic, idx) => (
+                                                <div key={idx} className="bg-black/30 border border-indigo-500/20 rounded-lg p-3">
+                                                    <div className="flex items-start gap-2.5">
+                                                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-xs flex items-center justify-center font-bold">
+                                                            {idx + 1}
+                                                        </span>
+                                                        <div className="flex-1 space-y-1">
+                                                            <p className="text-white text-xs font-semibold leading-relaxed">&quot;{ic.question}&quot;</p>
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1 text-[11px]">
+                                                                <p className="text-gray-400">
+                                                                    <span className="text-indigo-400 font-medium">Target Risk:</span> {ic.targetRisk}
+                                                                </p>
+                                                                <p className="text-gray-400">
+                                                                    <span className="text-amber-400 font-medium">Why This Matters:</span> {ic.whyItExposesFraud}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
