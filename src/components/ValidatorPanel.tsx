@@ -230,10 +230,94 @@ interface BenchmarkScenario {
 
 const BENCHMARK_SCENARIOS: BenchmarkScenario[] = [
     {
-        id: 'caseA',
-        title: '⚡ Case A: SunHydrogen AEM',
-        tag: 'False Positive Test',
+        id: 'caseNikola',
+        title: '⚡ Case A: Nikola H₂',
+        tag: 'Adjudicated False Positive',
         tagColor: 'text-amber-300 bg-amber-500/20 border-amber-500/40',
+        sector: 'CleanTech / Hydrogen Freight',
+        summary: 'Claims sub-$1.00/kg clean H₂ production. Omits commercial grid power tariffs, BoP, storage, and dispensing ($125M SEC settlement).',
+        niche: 'climate',
+        contextFields: {
+            sector: 'Heavy Freight & Hydrogen Infrastructure',
+            region: 'North America & Europe',
+            impactMetric: 'Zero emission long-haul freight',
+            targetAudience: 'Fleet operators, station partners, freight logistics'
+        },
+        description: `Project Nikola: Commercial Fuel-Cell Heavy Freight & Sub-$1/kg Hydrogen Supply
+
+The Problem:
+Diesel heavy freight accounts for disproportionate road emissions. Battery electric semi-trucks carry severe battery weight penalties that reduce freight payload capacity by 5,000+ kg.
+
+Claimed Solution:
+Nikola produces and dispenses zero-emission hydrogen fuel at commercial stations below $1.00/kg, guaranteeing total cost of ownership parity with diesel for long-haul fleet customers.
+
+Core Pitch Assertions:
+- Hydrogen Production Cost: Delivers clean hydrogen at under $1.00/kg wellhead production cost using dedicated direct solar PV arrays and proprietary alkaline electrolyzers.
+- Efficiency & Electricity Feed: Direct-coupled solar feed produces continuous hydrogen with zero intermediate conversion loss or grid demand charges.
+- Fueling Economics: Bundled truck lease includes all hydrogen dispensing at customer fleet depots without additional fuel surcharges.
+- Proprietary Hardware: Custom-engineered in-house electrolyzer cells, fuel cell power electronics, and inverter units.`
+    },
+    {
+        id: 'caseFirstSolar',
+        title: '☀️ Case B: First Solar CdTe',
+        tag: 'Adjudicated Moat / False Negative',
+        tagColor: 'text-blue-300 bg-blue-500/20 border-blue-500/40',
+        sector: 'Solar PV Manufacturing',
+        summary: '9% module efficiency vs 14% silicon incumbent. Raw models reject on headline efficiency; harness catches 6x manufacturing throughput and lower cost/watt (2006 S-1 / NREL).',
+        niche: 'climate',
+        contextFields: {
+            sector: 'Utility-Scale Solar Manufacturing',
+            region: 'Global & North America',
+            impactMetric: 'Gigawatt-scale clean electricity',
+            targetAudience: 'Utility developers, independent power producers, EPC contractors'
+        },
+        description: `First Solar: Cadmium Telluride (CdTe) Thin-Film Photovoltaic Module Manufacturing
+
+The Problem:
+Standard crystalline silicon solar panels require high-purity polysilicon wafers, ingot slicing, and high-temperature batch furnaces. Polysilicon shortages and high CapEx keep installed solar costs above $4.00/watt.
+
+Claimed Solution:
+First Solar manufactures thin-film solar modules using continuous high-rate Vapor Transport Deposition (VTD) of semiconductor compounds directly onto glass sheets.
+
+Core Pitch Assertions:
+- Headline Module Efficiency: 9.0% conversion efficiency at commercial scale (compared to 14.0-16.0% for incumbent crystalline silicon).
+- Semiconductor Material Consumption: Consumes less than 2% of the semiconductor material required by standard crystalline silicon wafers.
+- Manufacturing Velocity: Continuous automated inline cycle time under 2.5 hours from raw glass to completed, tested solar module.
+- Levelized Manufacturing Cost: Production cost below $1.40/watt with a defined roadmap to break $1.00/watt, creating the lowest installed cost per watt in utility-scale ground mount installations.`
+    },
+    {
+        id: 'caseSolyndra',
+        title: '🌀 Case C: Solyndra CIGS',
+        tag: 'Regime Shift Shock Test',
+        tagColor: 'text-purple-300 bg-purple-500/20 border-purple-500/40',
+        sector: 'Commercial Solar Systems',
+        summary: 'Cylindrical CIGS thin-film solar tubes. Differentiated engineering, but economic margin collapses when polysilicon crashes below $80/kg (CRS / DOE).',
+        niche: 'climate',
+        contextFields: {
+            sector: 'Commercial Rooftop Solar',
+            region: 'North America & Europe',
+            impactMetric: 'Distributed clean power generation',
+            targetAudience: 'Commercial building owners, industrial warehouse roofs'
+        },
+        description: `Solyndra: Cylindrical CIGS Thin-Film Photovoltaic Systems for Commercial Rooftops
+
+The Problem:
+Commercial flat roofs cannot support the heavy ballast and mounting racks required for traditional flat silicon panels without expensive roof structural reinforcement. Incumbent polysilicon costs over $300/kg.
+
+Claimed Solution:
+Solyndra manufactures arrays of cylindrical copper-indium-gallium-diselenide (CIGS) glass tubes that capture direct, diffuse, and reflected rooftop sunlight across a 360-degree surface.
+
+Core Pitch Assertions:
+- Zero Mounting Racks: Cylindrical geometry allows wind to blow through the panels without lifting, eliminating heavy concrete ballast and roof penetrations.
+- 360-Degree Optical Capture: Collects 20% more kilowatt-hours per installed watt on white reflective commercial roofs compared to stationary flat panels.
+- Installation Speed: Modular interlocking mounts allow installation in one-third the labor hours of conventional flat silicon racks.
+- Economic Linchpin: Bypasses expensive polysilicon wafer supply chains, yielding an insurmountable cost advantage over crystalline silicon panels.`
+    },
+    {
+        id: 'caseSunHydrogen',
+        title: '🔬 Case D: SunHydrogen AEM',
+        tag: 'Live Climate Diligence',
+        tagColor: 'text-emerald-300 bg-emerald-500/20 border-emerald-500/40',
         sector: 'CleanTech / Green H₂',
         summary: 'Claims €1.80/kg green H₂ at 78% HHV efficiency. Tests whether quarantine catches unverified grid power cost assumptions.',
         niche: 'climate',
@@ -262,69 +346,10 @@ Claimed Performance & Economics:
 - Direct solar PV coupling without intermediate battery buffering.`
     },
     {
-        id: 'caseB',
-        title: '🌍 Case B: TerraH2 Natural H₂',
-        tag: 'False Negative Test',
-        tagColor: 'text-blue-300 bg-blue-500/20 border-blue-500/40',
-        sector: 'Subsurface Energy',
-        summary: 'Natural serpentinization at $1.00/kg wellhead. Tests non-electrolyzer evaluation without false rejection.',
-        niche: 'climate',
-        contextFields: {
-            sector: 'Subsurface Energy & Gas',
-            region: 'Europe & International',
-            impactMetric: '150,000 t CO2/yr displaced',
-            targetAudience: 'Industrial hydrogen buyers, regional gas grids'
-        },
-        description: `TerraH2: Commercial Exploration of Natural Geologic Hydrogen
-
-The Problem:
-Manufactured green hydrogen requires 50 to 55 kWh of electricity per kilogram, forcing levelized production costs above €5.00/kg in Europe. Blue hydrogen requires methane feedstock and carbon capture infrastructure.
-
-Our Solution:
-TerraH2 drills and produces naturally occurring white hydrogen generated by continuous subsurface water-rock reactions, completely bypassing electrolyzers and external electricity inputs.
-
-Core Claims:
-- Reaction Mechanism: Natural serpentinization of iron-rich ophiolitic mantle rocks and radiolysis generating 96% pure continuous hydrogen accumulations.
-- Production Economics: Claimed wellhead extraction cost below $1.00/kg H2, competing directly with incumbent fossil grey hydrogen ($1.50/kg).
-- Resource Scale: Claims a continuous, self-renewing subsurface accumulation supporting 20+ years of commercial production without depletion.`
-    },
-    {
-        id: 'caseC',
-        title: '🧱 Case C: CarbonLock Slag',
-        tag: 'CleanTech Materials',
-        tagColor: 'text-emerald-300 bg-emerald-500/20 border-emerald-500/40',
-        sector: 'Concrete Mineralization',
-        summary: '70% clinker displacement and 320 kg CO₂/t concrete permanent mineralization at ambient conditions.',
-        niche: 'climate',
-        contextFields: {
-            sector: 'Construction Materials',
-            region: 'Europe & North America',
-            impactMetric: '320 kg CO2 / t concrete',
-            targetAudience: 'Precast concrete plants, structural contractors'
-        },
-        description: `CarbonLock Materials: Slag Mineralization for Precast Concrete
-
-The Problem:
-Standard Ordinary Portland Cement (OPC) is responsible for 8% of global greenhouse gas emissions. Clean alternatives require high curing heat or exotic chemicals that increase costs by 30-50%.
-
-Our Solution:
-CarbonLock sequesters industrial flue-gas CO2 directly into precast structural concrete using industrial steel slag and ground granulated blast-furnace slag (GGBFS).
-
-Core Innovation:
-- Accelerated Aqueous Carbonation: Consumes raw, unpurified flue gas (12-15% CO2) at ambient temperature and pressure.
-- Cement Clinker Displacement: Replaces 70% of standard Portland cement clinker while achieving 50 MPa 28-day compressive strength.
-- Permanent Thermodynamic Mineralization: Traps CO2 as stable calcium and magnesium carbonates with 1,000+ year permanence.
-
-Claimed Performance & Economics:
-- Net carbon negative: Permanently traps 320 kg CO2 per metric tonne of precast concrete.
-- Green premium under 3% compared to standard European C30/37 structural precast beams.
-- Certified compliant with European EN 206 and ASTM C150 durability standards.`
-    },
-    {
-        id: 'caseD',
-        title: '🤖 Case D: KernelGuard Harness',
-        tag: 'Agentic AI Systems',
-        tagColor: 'text-purple-300 bg-purple-500/20 border-purple-500/40',
+        id: 'caseKernelGuard',
+        title: '🤖 Case E: KernelGuard Harness',
+        tag: 'Deterministic AI Systems',
+        tagColor: 'text-cyan-300 bg-cyan-500/20 border-cyan-500/40',
         sector: 'Deterministic Execution',
         summary: 'Tri-state operational machine, contradiction quarantine, and causal policy budgeting.',
         niche: 'ai',
@@ -378,6 +403,7 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
     };
 
     const [activeScenario, setActiveScenario] = useState<string | null>(null);
+    const [activeRegime, setActiveRegime] = useState<0 | 1 | 2 | 3>(3);
     const resultsRef = useRef<HTMLDivElement>(null);
 
     const loadScenario = (scenario: BenchmarkScenario) => {
@@ -744,7 +770,7 @@ export default function ValidatorPanel({ stories, onFilter }: ValidatorPanelProp
                     <span className="text-[11px] text-gray-500">1-Click Load</span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
                     {BENCHMARK_SCENARIOS.map((sc) => {
                         const isSelected = activeScenario === sc.id;
                         return (
@@ -1085,8 +1111,307 @@ Core Innovation: VIAP (Visual-Inertial Anchor Protocol)
                             </button>
                         </div>
 
-                        {/* 🛡️ INSTITUTIONAL TRUTH & CONTRADICTION QUARANTINE */}
-                        {intelligentResults.agenticDiligence && (
+                        {/* 🔬 4-REGIME INFORMATION ARCHITECTURE ABLATION SWITCHER */}
+                        <div className="bg-slate-950/90 border border-indigo-500/30 rounded-2xl p-4 shadow-xl">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 border-b border-indigo-500/20 pb-2.5">
+                                <div>
+                                    <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
+                                        🔬 Information Architecture Ablation Switcher
+                                    </span>
+                                    <p className="text-xs text-gray-400 mt-0.5">
+                                        Toggle architectural layers to evaluate how deterministic admission control prevents frontier model failures
+                                    </p>
+                                </div>
+                                <span className="text-[11px] text-indigo-400 font-mono bg-indigo-950/60 px-2.5 py-1 rounded-full border border-indigo-500/30">
+                                    Regime {activeRegime} / 3 Active
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveRegime(0)}
+                                    className={`p-2.5 rounded-xl border text-left transition-all ${
+                                        activeRegime === 0
+                                            ? 'bg-red-950/50 border-red-500 text-white shadow-md ring-1 ring-red-500/50'
+                                            : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-gray-200'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">Regime 0</span>
+                                        {activeRegime === 0 && <span className="text-[10px] text-red-400 font-bold">● Selected</span>}
+                                    </div>
+                                    <p className="text-xs font-bold text-white mb-0.5">Raw Frontier Model</p>
+                                    <p className="text-[10px] text-gray-400 leading-tight">Unconstrained LLM. Sits in credulity bias.</p>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveRegime(1)}
+                                    className={`p-2.5 rounded-xl border text-left transition-all ${
+                                        activeRegime === 1
+                                            ? 'bg-blue-950/50 border-blue-500 text-white shadow-md ring-1 ring-blue-500/50'
+                                            : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-gray-200'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400">Regime 1</span>
+                                        {activeRegime === 1 && <span className="text-[10px] text-blue-400 font-bold">● Selected</span>}
+                                    </div>
+                                    <p className="text-xs font-bold text-white mb-0.5">Tool Retrieval (RAG)</p>
+                                    <p className="text-[10px] text-gray-400 leading-tight">Adds web &amp; price indexes. Unchecked memory.</p>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveRegime(2)}
+                                    className={`p-2.5 rounded-xl border text-left transition-all ${
+                                        activeRegime === 2
+                                            ? 'bg-purple-950/50 border-purple-500 text-white shadow-md ring-1 ring-purple-500/50'
+                                            : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-gray-200'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400">Regime 2</span>
+                                        {activeRegime === 2 && <span className="text-[10px] text-purple-400 font-bold">● Selected</span>}
+                                    </div>
+                                    <p className="text-xs font-bold text-white mb-0.5">Memory Quarantine</p>
+                                    <p className="text-[10px] text-gray-400 leading-tight">Tri-state staging. Contradiction isolation.</p>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveRegime(3)}
+                                    className={`p-2.5 rounded-xl border text-left transition-all ${
+                                        activeRegime === 3
+                                            ? 'bg-emerald-950/50 border-emerald-500 text-white shadow-md ring-1 ring-emerald-500/50'
+                                            : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-gray-200'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Regime 3</span>
+                                        {activeRegime === 3 && <span className="text-[10px] text-emerald-400 font-bold">● Selected</span>}
+                                    </div>
+                                    <p className="text-xs font-bold text-white mb-0.5">Full Diligence Gate</p>
+                                    <p className="text-[10px] text-gray-400 leading-tight">Quarantine + Sensitivity + IC 3 Punch-List.</p>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* REGIME 0: RAW FRONTIER MODEL VIEW */}
+                        {activeRegime === 0 && (
+                            <div className="space-y-4 bg-gradient-to-b from-red-950/40 to-slate-900/60 border-2 border-red-500/40 rounded-2xl p-5 shadow-xl">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-red-500/20 pb-3">
+                                    <div>
+                                        <h3 className="text-xl font-bold text-red-300 flex items-center gap-2">
+                                            ⚠️ Regime 0: Raw Frontier Model (Credulity Bias Failure)
+                                        </h3>
+                                        <p className="text-xs text-gray-400 mt-0.5">
+                                            Unconstrained foundation model: optimizes for conversational plausibility without physical or accounting checks
+                                        </p>
+                                    </div>
+                                    <span className="px-3 py-1 text-xs rounded-full bg-red-500/20 border border-red-400/30 text-red-200 font-medium">
+                                        Zero Admission Gates
+                                    </span>
+                                </div>
+
+                                <div className="bg-black/40 border border-red-500/30 rounded-xl p-4 space-y-3">
+                                    <h4 className="text-red-400 font-semibold text-sm">Why Frontier Models Fail Diligence Without a Harness</h4>
+                                    <p className="text-gray-300 text-xs leading-relaxed">
+                                        Raw LLMs evaluate venture claims based on linguistic confidence. They lack thermodynamic conservation checks, levelized cost bounds, and state quarantine. Consequently, they fall into two fatal failure modes: credulous false positives on impossible numbers, or dismissive false negatives on non-standard technical moats.
+                                    </p>
+
+                                    {/* Case specific empirical contrast */}
+                                    <div className="bg-red-950/30 border border-red-500/20 rounded-lg p-3 mt-3">
+                                        <p className="text-[11px] uppercase tracking-wider text-red-400 font-bold mb-1">
+                                            {activeScenario === 'caseNikola' && 'Case A Ground Truth Failure: Nikola H₂'}
+                                            {activeScenario === 'caseFirstSolar' && 'Case B Ground Truth Failure: First Solar CdTe'}
+                                            {activeScenario === 'caseSolyndra' && 'Case C Ground Truth Failure: Solyndra CIGS'}
+                                            {activeScenario === 'caseSunHydrogen' && 'Case D Ground Truth Failure: SunHydrogen AEM'}
+                                            {activeScenario === 'caseKernelGuard' && 'Case E Ground Truth Failure: KernelGuard Harness'}
+                                            {!activeScenario && 'Empirical Baseline Comparison'}
+                                        </p>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2 text-xs">
+                                            <div className="bg-black/30 border border-white/10 rounded p-2.5">
+                                                <span className="text-red-400 font-bold block mb-1">❌ Raw Model Output (Regime 0):</span>
+                                                <p className="text-gray-300 leading-snug">
+                                                    {activeScenario === 'caseNikola' && 'Endorsed sub-$1.00/kg clean hydrogen as a breakthrough catalyst for diesel TCO parity. Predicted high investment conviction and massive commercial fleet adoption.'}
+                                                    {activeScenario === 'caseFirstSolar' && 'Rejected First Solar due to 9% conversion efficiency versus 15% crystalline silicon incumbent. Flagged efficiency gap as an insurmountable commercial disqualifier.'}
+                                                    {activeScenario === 'caseSolyndra' && 'Endorsed cylindrical CIGS tubes as a superior architecture that bypasses expensive $300/kg polysilicon supply chains. Predicted sustained market leadership.'}
+                                                    {activeScenario === 'caseSunHydrogen' && 'Endorsed €1.80/kg green hydrogen without checking whether regional electricity grid prices permit that cost floor.'}
+                                                    {activeScenario === 'caseKernelGuard' && 'Classified deterministic state management as a standard prompt engineering wrapper, missing operational memory isolation.'}
+                                                    {!activeScenario && 'Accepts founder pitch metrics at face value without evaluating thermodynamic lower bounds or industrial supply chain bottlenecks.'}
+                                                </p>
+                                            </div>
+                                            <div className="bg-emerald-950/30 border border-emerald-500/20 rounded p-2.5">
+                                                <span className="text-emerald-400 font-bold block mb-1">✅ Adjudicated Ground Truth:</span>
+                                                <p className="text-gray-300 leading-snug">
+                                                    {activeScenario === 'caseNikola' && 'Fatal False Positive. SEC assessed $125M penalty. At 52 kWh/kg, commercial electricity alone costs $3.64/kg before CapEx, dispensing, or storage.'}
+                                                    {activeScenario === 'caseFirstSolar' && 'Fatal False Negative. First Solar reached a $20B+ market cap. Its 6x manufacturing throughput and sub-$1/watt cost created the industry standard utility moat.'}
+                                                    {activeScenario === 'caseSolyndra' && 'Regime Shift Collapse. When polysilicon prices dropped from $300/kg to $30/kg, Solyndra was unable to compete, resulting in bankruptcy.'}
+                                                    {activeScenario === 'caseSunHydrogen' && 'At €1.80/kg, electricity price must stay ≤ €34.60/MWh. European industrial power of €80-140/MWh makes this cost target mathematically impossible.'}
+                                                    {activeScenario === 'caseKernelGuard' && 'Tri-state memory quarantine is required to prevent unvalidated model context from corrupting operational institutional state.'}
+                                                    {!activeScenario && 'Rigorous technical and economic due diligence requires physical boundary identities and write-ahead admission gates.'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-slate-900/60 border border-slate-700/60 rounded-xl p-4">
+                                    <h5 className="text-xs uppercase tracking-wider text-gray-400 font-bold mb-2">Failure Mechanism Architecture</h5>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-[11px]">
+                                        <div className="bg-black/30 p-2.5 rounded border border-white/5">
+                                            <span className="text-red-400 font-semibold block">Missing Admission Gate</span>
+                                            <p className="text-gray-400 mt-1">Prompted LLM commits unverified founder claims straight into working memory.</p>
+                                        </div>
+                                        <div className="bg-black/30 p-2.5 rounded border border-white/5">
+                                            <span className="text-red-400 font-semibold block">No Conservation Check</span>
+                                            <p className="text-gray-400 mt-1">Lacks physical identities (kWh/kg, levelized CapEx) to falsify stated cost targets.</p>
+                                        </div>
+                                        <div className="bg-black/30 p-2.5 rounded border border-white/5">
+                                            <span className="text-red-400 font-semibold block">Static Generation</span>
+                                            <p className="text-gray-400 mt-1">Zero causal sensitivity to input price spikes, commodity crashes, or degradation rates.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* REGIME 1: TOOL RETRIEVAL (RAG BASELINE) VIEW */}
+                        {activeRegime === 1 && (
+                            <div className="space-y-4 bg-gradient-to-b from-blue-950/40 to-slate-900/60 border-2 border-blue-500/40 rounded-2xl p-5 shadow-xl">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-blue-500/20 pb-3">
+                                    <div>
+                                        <h3 className="text-xl font-bold text-blue-300 flex items-center gap-2">
+                                            ℹ️ Regime 1: Tool &amp; Web Retrieval (RAG Baseline)
+                                        </h3>
+                                        <p className="text-xs text-gray-400 mt-0.5">
+                                            Augmented with web indexes and market data: retrieves facts, but lacks write-ahead schema gates
+                                        </p>
+                                    </div>
+                                    <span className="px-3 py-1 text-xs rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-200 font-medium">
+                                        Unchecked Memory RAG
+                                    </span>
+                                </div>
+
+                                <div className="bg-black/40 border border-blue-500/30 rounded-xl p-4 space-y-3">
+                                    <h4 className="text-blue-400 font-semibold text-sm">The RAG Diligence Blindspot</h4>
+                                    <p className="text-gray-300 text-xs leading-relaxed">
+                                        Standard RAG queries vector embeddings or search engines to find current market figures (such as European spot electricity prices or peer funding rounds). However, RAG feeds these retrieved snippets directly into the prompt context. Without deterministic schema gates, the model rationalizes contradictory statements into plausible narratives instead of quarantining them.
+                                    </p>
+
+                                    <div className="bg-blue-950/30 border border-blue-500/20 rounded-lg p-3">
+                                        <span className="text-blue-300 text-xs font-bold block mb-1">Observed RAG Failure Pattern:</span>
+                                        <p className="text-gray-300 text-xs leading-snug">
+                                            RAG correctly retrieves that industrial European electricity averages €85/MWh. Yet, because the pitch claims €1.80/kg green H₂, the model produces a hybrid rationalization: &quot;While current grid power is €85/MWh, the company plans to use dedicated off-grid solar to achieve parity.&quot; It fails to calculate that dedicated solar with 20% capacity factor increases stack levelized CapEx 5x, destroying the business case.
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
+                                        <div className="bg-black/30 border border-white/10 rounded p-2.5">
+                                            <span className="text-blue-400 font-semibold block mb-0.5">What RAG Solves</span>
+                                            <p className="text-gray-400 text-[11px]">Retrieves external market facts, spot commodity benchmarks, and public filings.</p>
+                                        </div>
+                                        <div className="bg-black/30 border border-white/10 rounded p-2.5">
+                                            <span className="text-amber-400 font-semibold block mb-0.5">What RAG Misses</span>
+                                            <p className="text-gray-400 text-[11px]">Cannot quarantine unverified founder assertions before they pollute operational memory.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* REGIME 2: MEMORY QUARANTINE VIEW */}
+                        {activeRegime === 2 && (
+                            <div className="space-y-4 bg-gradient-to-b from-purple-950/40 to-slate-900/60 border-2 border-purple-500/40 rounded-2xl p-5 shadow-xl">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-500/20 pb-3">
+                                    <div>
+                                        <h3 className="text-xl font-bold text-purple-300 flex items-center gap-2">
+                                            🛡️ Regime 2: Write-Ahead Admission &amp; Memory Quarantine
+                                        </h3>
+                                        <p className="text-xs text-gray-400 mt-0.5">
+                                            Deterministic interception: candidate claims are staged in tri-state memory before state promotion
+                                        </p>
+                                    </div>
+                                    <span className="px-3 py-1 text-xs rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-200 font-medium">
+                                        Tri-State Staging Active
+                                    </span>
+                                </div>
+
+                                <div className="bg-purple-950/20 border border-purple-500/30 rounded-xl p-3 text-xs text-purple-200 leading-relaxed">
+                                    <span className="font-bold text-purple-300">Admission Control in Action:</span> Every factual assertion is extracted, typed, and compared against verified physical schemas. Verified claims advance to truth state; unverified or conflicting assertions are quarantined.
+                                </div>
+
+                                {/* Quarantine Tables */}
+                                {intelligentResults.agenticDiligence?.quarantine && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Verified Claims */}
+                                        <div className="bg-emerald-950/30 border border-emerald-500/30 rounded-xl p-4">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <h4 className="text-emerald-400 font-semibold text-sm flex items-center gap-2">
+                                                    <span>✅ Verified &amp; Plausible Claims</span>
+                                                </h4>
+                                                <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
+                                                    Truth Gate Passed
+                                                </span>
+                                            </div>
+                                            <div className="space-y-2.5">
+                                                {intelligentResults.agenticDiligence.quarantine.verifiedClaims?.map((item, idx) => (
+                                                    <div key={idx} className="bg-emerald-900/20 border border-emerald-500/20 rounded-lg p-2.5">
+                                                        <p className="text-white text-xs font-medium">{item.claim}</p>
+                                                        <p className="text-emerald-300/80 text-[11px] mt-1 flex items-start gap-1">
+                                                            <span className="text-emerald-400 font-bold">Basis:</span> {item.basis}
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Quarantined Assertions */}
+                                        <div className="bg-amber-950/30 border border-amber-500/40 rounded-xl p-4">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <h4 className="text-amber-400 font-semibold text-sm flex items-center gap-2">
+                                                    <span>🚨 Quarantined Assertions</span>
+                                                </h4>
+                                                <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">
+                                                    Contradiction Flagged
+                                                </span>
+                                            </div>
+                                            <div className="space-y-2.5">
+                                                {intelligentResults.agenticDiligence.quarantine.quarantinedAssertions?.map((item, idx) => (
+                                                    <div key={idx} className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-2.5">
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <p className="text-white text-xs font-medium">{item.assertion}</p>
+                                                            <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${item.severity === 'CRITICAL' ? 'bg-red-500/30 text-red-300 border border-red-500/40' : 'bg-yellow-500/30 text-yellow-300 border border-yellow-500/40'}`}>
+                                                                {item.severity}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-amber-300/90 text-[11px] mt-1 flex items-start gap-1">
+                                                            <span className="text-red-400 font-bold">Conflict:</span> {item.contradiction}
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="bg-black/30 border border-white/10 rounded-lg p-3 text-xs text-gray-400 flex items-center justify-between">
+                                    <span>Staging status: Claims quarantined. Switch to <strong className="text-emerald-400">Regime 3</strong> for causal price shock sensitivity and the IC interrogation punch-list.</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveRegime(3)}
+                                        className="px-3 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded border border-emerald-500/40 font-semibold text-xs transition-colors"
+                                    >
+                                        Advance to Regime 3 →
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* REGIME 3: FULL INSTITUTIONAL DILIGENCE GATE VIEW */}
+                        {activeRegime === 3 && intelligentResults.agenticDiligence && (
                             <div className="space-y-4 bg-gradient-to-b from-slate-900/60 to-purple-950/40 border-2 border-purple-500/40 rounded-2xl p-5 shadow-xl">
                                 <div className="flex items-center justify-between border-b border-purple-500/20 pb-3">
                                     <div>
@@ -1152,6 +1477,51 @@ Core Innovation: VIAP (Visual-Inertial Anchor Protocol)
                                                     </div>
                                                 ))}
                                             </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* ⚡ THERMODYNAMIC ELECTRICITY CEILING IDENTITY */}
+                                {(activeScenario === 'caseNikola' || activeScenario === 'caseSunHydrogen' || selectedNiche === 'climate') && (
+                                    <div className="bg-slate-950/90 border border-emerald-500/40 rounded-xl p-4 my-2 shadow-inner">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-500/20 pb-2.5 mb-3">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-base">⚡</span>
+                                                <div>
+                                                    <h5 className="text-emerald-300 font-bold text-xs uppercase tracking-wider">
+                                                        Thermodynamic Electricity Ceiling Identity
+                                                    </h5>
+                                                    <p className="text-[11px] text-gray-400">
+                                                        Physical lower bound: Power Tariff versus Stated Hydrogen Cost Target
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                                Physical Boundary Check
+                                            </span>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-center mb-3">
+                                            <div className="bg-black/40 border border-white/10 rounded-lg p-2.5">
+                                                <span className="text-[10px] text-gray-400 block uppercase">Stack Consumption</span>
+                                                <span className="text-white font-mono font-bold text-sm">43 - 52 kWh / kg H₂</span>
+                                            </div>
+                                            <div className="bg-black/40 border border-white/10 rounded-lg p-2.5">
+                                                <span className="text-[10px] text-gray-400 block uppercase">Claimed H₂ Target</span>
+                                                <span className="text-emerald-400 font-mono font-bold text-sm">
+                                                    {activeScenario === 'caseNikola' ? '$1.00 / kg' : '€1.80 / kg'}
+                                                </span>
+                                            </div>
+                                            <div className="bg-black/40 border border-emerald-500/30 rounded-lg p-2.5">
+                                                <span className="text-[10px] text-emerald-300 block uppercase">Max Permissible Power Tariff</span>
+                                                <span className="text-amber-300 font-mono font-bold text-sm">
+                                                    {activeScenario === 'caseNikola' ? '≤ $19.20 / MWh ($0.019/kWh)' : '≤ €34.60 / MWh (€0.035/kWh)'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="text-[11px] text-gray-300 bg-emerald-950/20 border border-emerald-500/20 rounded-lg p-2.5 leading-relaxed">
+                                            <span className="text-emerald-400 font-semibold">The Diligence Gate:</span> Electricity-Only Lower Bound = Consumption (52 kWh/kg) × Power Price (€/kWh). At €1.80/kg sales price, the power price ceiling is strictly ≤ €34.60/MWh (€0.035/kWh) <em className="text-amber-300 font-medium">before</em> accounting for stack CapEx, balance-of-plant, storage, transport, or compression. Any pitch assuming commercial European grid power (€60-120/MWh) violates this thermodynamic ceiling.
                                         </div>
                                     </div>
                                 )}
