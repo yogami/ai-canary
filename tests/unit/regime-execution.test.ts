@@ -41,4 +41,15 @@ test.describe('RegimeExecutionService', () => {
         expect(result.scmGraph).toBeDefined();
         expect(result.scmGraph?.nodes.length).toBeGreaterThanOrEqual(4);
     });
+
+    test('should execute Regime 3 for AI startup generating AI SCM and compounding error questions', () => {
+        const aiPitch = 'OmniAgent: Autonomous IT agent guaranteeing 100% bug-free deployments for $15/seat with infinite multi-turn loops.';
+        const result = service.executeRegime(DiligenceRegime.FULL_DILIGENCE_GATE, aiPitch, 'ai', []);
+        expect(result.regime).toBe(DiligenceRegime.FULL_DILIGENCE_GATE);
+        expect(result.canaryScore.grade).toBe('F');
+        expect(result.quarantine.quarantinedAssertions.length).toBeGreaterThan(0);
+        expect(result.scmGraph?.id).toBe('scm-ai-saas');
+        expect(result.causalSensitivity.criticalAssumption).toContain('Inference token cost');
+        expect(result.icPunchList[0].question).toContain('multi-turn compounding error rate');
+    });
 });

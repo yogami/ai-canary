@@ -109,6 +109,40 @@ test.describe('TriStateAdmissionController', () => {
         expect(result.rejectionReason).toBe(RejectionReason.LOW_CONFIDENCE);
     });
 
+    test('should reject direct air capture claims violating desorption thermal energy limits', () => {
+        const dacClaim: CandidateClaim = {
+            id: 'c-7',
+            subject: 'Direct Air Capture',
+            predicate: 'operates_at_energy',
+            object: '0.2 GJ/ton',
+            rawClaim: 'Requires only 0.2 GJ of thermal energy per ton of captured CO2',
+            confidence: 0.9,
+            status: AdmissionStatus.PENDING
+        };
+
+        const result = controller.evaluateClaim(dacClaim, 'climate');
+        expect(result.status).toBe(AdmissionStatus.REJECTED);
+        expect(result.rejectionReason).toBe(RejectionReason.PHYSICAL_VIOLATION);
+        expect(result.contradictionDetail).toContain('Desorption energy lower bound');
+    });
+
+    test('should reject fintech claims asserting zero credit default risk', () => {
+        const fintechClaim: CandidateClaim = {
+            id: 'c-8',
+            subject: 'Algorithmic Underwriter',
+            predicate: 'guarantees_default_rate',
+            object: '0.0% default',
+            rawClaim: 'Guarantees 0.0% credit default across all economic cycles',
+            confidence: 0.9,
+            status: AdmissionStatus.PENDING
+        };
+
+        const result = controller.evaluateClaim(fintechClaim, 'fintech');
+        expect(result.status).toBe(AdmissionStatus.REJECTED);
+        expect(result.rejectionReason).toBe(RejectionReason.CAUSAL_INCONSISTENCY);
+        expect(result.contradictionDetail).toContain('Credit underwriting carries structural non-zero default');
+    });
+
     test('should batch partition candidate claims into promoted, rejected, and pending sets', () => {
         const claims: CandidateClaim[] = [
             {

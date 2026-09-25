@@ -34,13 +34,16 @@ export class CausalPreFlightGate {
     public runSensitivitySweep(
         parameter: string,
         values: number[],
-        baselineInputs: Record<string, number>
+        baselineInputs: Record<string, number>,
+        sector: string = 'climate'
     ): SensitivityPoint[] {
         const results: SensitivityPoint[] = [];
 
         for (const val of values) {
             const currentInputs = { ...baselineInputs, [parameter]: val };
-            const margin = this.calculateClimateMargin(currentInputs);
+            const margin = (sector === 'climate' || sector === 'energy')
+                ? this.calculateClimateMargin(currentInputs)
+                : this.calculateAIMargin(currentInputs);
             results.push({
                 parameterValue: val,
                 grossMargin: Math.round(margin * 100) / 100,
@@ -49,6 +52,16 @@ export class CausalPreFlightGate {
         }
 
         return results;
+    }
+
+    private calculateAIMargin(inputs: Record<string, number>): number {
+        const tokenRate = inputs.token_inference_cost || 0.002;
+        const turns = inputs.agent_loop_iterations || 15;
+        const estTokensPerTurn = 1500;
+        const totalTokens = (turns * estTokensPerTurn) / 1000;
+        const computeCost = totalTokens * tokenRate;
+        const rev = inputs.subscription_price_per_task || 0.05;
+        return rev - computeCost;
     }
 
     private buildClimateSCM(): StructuralCausalModel {

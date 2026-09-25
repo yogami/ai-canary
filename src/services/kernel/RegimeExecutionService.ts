@@ -6,6 +6,7 @@ import {
 } from '../../domain/kernel/admission-types';
 import { TriStateAdmissionController, PartitionedClaims } from './TriStateAdmissionController';
 import { CausalPreFlightGate, CausalPreFlightResult } from './CausalPreFlightGate';
+import { getDomainICPunchList } from '../../domain/kernel/ic-punch-list';
 
 export interface RegimeExecutionResult {
     regime: DiligenceRegime;
@@ -145,22 +146,25 @@ export class RegimeExecutionService {
         const partitioned = this.admissionController.evaluateClaims(claims, sector);
         const scm = this.causalGate.buildDomainSCM(sector);
         const causalCheck = this.evaluateCausalCheck(sector);
-        const scenarios = this.buildStressScenarios();
+        const scenarios = this.buildStressScenarios(sector);
+        const isClimate = sector === 'climate' || sector === 'energy';
 
         return {
             regime: DiligenceRegime.FULL_DILIGENCE_GATE,
             regimeInsight: 'Full Diligence Gate: Causal Pre-Flight Gate, SCM sensitivity, and IC punch-list enforced.',
-            canaryScore: this.buildScore(causalCheck.isAdmitted),
+            canaryScore: this.buildScore(causalCheck.isAdmitted && partitioned.rejected.length === 0),
             quarantine: {
                 verifiedClaims: this.mapVerified(partitioned.promoted, 'Physical identity verified', 'VERIFIED'),
                 quarantinedAssertions: this.mapQuarantined(partitioned.rejected)
             },
             causalSensitivity: {
-                criticalAssumption: 'Grid electricity price and stack degradation over continuous cycle',
+                criticalAssumption: isClimate
+                    ? 'Grid electricity price and stack degradation over continuous cycle'
+                    : 'Inference token cost scaling and multi-turn compounding error rate',
                 stressScenarios: scenarios,
-                breakEvenThreshold: causalCheck.breakEvenThreshold || 'Grid power ceiling exceeded'
+                breakEvenThreshold: causalCheck.breakEvenThreshold || 'Unit contribution margin exceeded'
             },
-            icPunchList: this.buildICPunchList(),
+            icPunchList: getDomainICPunchList(sector),
             scmGraph: scm
         };
     }
@@ -173,16 +177,31 @@ export class RegimeExecutionService {
         return this.causalGate.preFlightCheck(scm, inputs);
     }
 
-    private buildStressScenarios(): Array<{ parameter: string; shift: string; impact: string }> {
+    private buildStressScenarios(sector: string): Array<{ parameter: string; shift: string; impact: string }> {
+        if (sector === 'climate' || sector === 'energy') {
+            const sweep = this.causalGate.runSensitivitySweep(
+                'electricity_price',
+                [10, 30, 60, 100],
+                { stack_efficiency: 52, market_offtake_price: 2.0 },
+                'climate'
+            );
+            return sweep.map((pt) => ({
+                parameter: `Power @ €${pt.parameterValue}/MWh`,
+                shift: `Margin: €${pt.grossMargin}/kg`,
+                impact: pt.isSolvent ? 'Solvent operation' : 'Insolvent bankruptcy cliff'
+            }));
+        }
+
         const sweep = this.causalGate.runSensitivitySweep(
-            'electricity_price',
-            [10, 30, 60, 100],
-            { stack_efficiency: 52, market_offtake_price: 2.0 }
+            'token_inference_cost',
+            [0.001, 0.003, 0.006, 0.015],
+            { agent_loop_iterations: 15, subscription_price_per_task: 0.05 },
+            'ai'
         );
         return sweep.map((pt) => ({
-            parameter: `Power @ €${pt.parameterValue}/MWh`,
-            shift: `Margin: €${pt.grossMargin}/kg`,
-            impact: pt.isSolvent ? 'Solvent operation' : 'Insolvent bankruptcy cliff'
+            parameter: `Token Rate @ $${pt.parameterValue}/1k`,
+            shift: `Margin: $${pt.grossMargin}/task`,
+            impact: pt.isSolvent ? 'Solvent operation' : 'Insolvent unit economics failure'
         }));
     }
 
@@ -211,25 +230,5 @@ export class RegimeExecutionService {
             severity: 'CRITICAL',
             rejectionReason: c.rejectionReason
         }));
-    }
-
-    private buildICPunchList() {
-        return [
-            {
-                question: 'What verified electricity tariff guarantees positive margin when stack consumption is 52 kWh/kg?',
-                targetRisk: 'Thermodynamic margin collapse',
-                whyItExposesFraud: 'Power cost alone exceeds off-take contract price under prevailing regional tariffs.'
-            },
-            {
-                question: 'Has the single-junction efficiency claim been independently audited by NREL or Fraunhofer?',
-                targetRisk: 'Unphysical conversion efficiency',
-                whyItExposesFraud: 'Claims exceeding the Shockley-Queisser limit require multi-junction tandem physics.'
-            },
-            {
-                question: 'What is the measured degradation rate after 5,000 hours of continuous dynamic load cycling?',
-                targetRisk: 'Stack durability warranty liability',
-                whyItExposesFraud: 'Accelerated membrane failure causes catastrophic balance sheet warranty claims.'
-            }
-        ];
     }
 }

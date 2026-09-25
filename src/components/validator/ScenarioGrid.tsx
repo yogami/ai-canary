@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { BENCHMARK_SCENARIOS } from '@/domain/benchmark-scenarios';
+import { NOVEL_STARTUPS } from '@/domain/novel-startups';
 import { BenchmarkScenario } from '@/domain/types';
 
 interface ScenarioGridProps {
@@ -10,6 +11,14 @@ interface ScenarioGridProps {
 }
 
 export default function ScenarioGrid({ activeScenario, onSelectScenario }: ScenarioGridProps) {
+    const handlePickRandomNovel = () => {
+        const available = NOVEL_STARTUPS.filter(s => s.id !== activeScenario);
+        const next = available.length > 0
+            ? available[Math.floor(Math.random() * available.length)]
+            : NOVEL_STARTUPS[0];
+        onSelectScenario(next);
+    };
+
     return (
         <div className="mb-6 bg-gradient-to-br from-slate-900/80 via-slate-900/40 to-indigo-950/40 border border-indigo-500/30 rounded-2xl p-5 shadow-lg">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
@@ -18,10 +27,19 @@ export default function ScenarioGrid({ activeScenario, onSelectScenario }: Scena
                         ⚡ Pre-Loaded Diligence Benchmark Cases
                     </span>
                     <p className="text-xs text-gray-400 mt-0.5">
-                        Select a scenario to stage venture claims and test deterministic admission control
+                        Select a historical case or generate a brand new novel startup to test the diligence gate
                     </p>
                 </div>
-                <span className="text-[11px] text-gray-500">1-Click Load</span>
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={handlePickRandomNovel}
+                        className="text-xs bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 text-purple-200 px-3 py-1.5 rounded-lg font-medium transition-colors flex items-center gap-1.5 shadow-sm"
+                    >
+                        <span>🎲 Random Novel Startup</span>
+                    </button>
+                    <span className="text-[11px] text-gray-500 hidden sm:inline">1-Click Load</span>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">

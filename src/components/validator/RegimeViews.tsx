@@ -5,6 +5,7 @@ import { DiligenceRegime } from '@/domain/diligence-regime';
 import { AnalysisResult } from '@/domain/types';
 import QuarantineTables from './QuarantineTables';
 import ThermodynamicCeiling from './ThermodynamicCeiling';
+import InferenceEconomicsIdentity from './InferenceEconomicsIdentity';
 import CausalSensitivityView from './CausalSensitivityView';
 import ICPunchList from './ICPunchList';
 
@@ -166,13 +167,15 @@ function renderRegime3(results: AnalysisResult, scenario: string | null, niche: 
     const quarantined = r3?.quarantine?.quarantinedAssertions || results.agenticDiligence?.quarantine?.quarantinedAssertions;
     const sensitivity = r3?.causalSensitivity || results.agenticDiligence?.causalSensitivity;
     const punchList = r3?.icPunchList || results.agenticDiligence?.icPunchList || [];
-    const showCeiling = scenario === 'caseNikola' || scenario === 'caseSunHydrogen' || niche === 'climate';
+    const showClimateCeiling = scenario === 'caseNikola' || scenario === 'caseSunHydrogen' || niche === 'climate';
+    const showAIEconomics = !showClimateCeiling && (niche === 'ai' || niche === 'technology');
 
     return (
         <div className="space-y-4 bg-gradient-to-b from-slate-900/60 to-purple-950/40 border-2 border-purple-500/40 rounded-2xl p-5 shadow-xl">
             {renderRegime3Header()}
             <QuarantineTables verifiedClaims={verified} quarantinedAssertions={quarantined} />
-            {showCeiling && <ThermodynamicCeiling activeScenario={scenario} />}
+            {showClimateCeiling && <ThermodynamicCeiling activeScenario={scenario} />}
+            {showAIEconomics && <InferenceEconomicsIdentity activeScenario={scenario} />}
             <CausalSensitivityView sensitivity={sensitivity} />
             <ICPunchList items={punchList} />
         </div>

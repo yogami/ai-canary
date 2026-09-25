@@ -74,31 +74,34 @@ export class TriStateAdmissionController {
         sector: string
     ): { reason: RejectionReason; detail: string } | null {
         const text = `${claim.rawClaim} ${claim.object}`.toLowerCase();
-
         if (sector === 'climate' || sector === 'energy') {
-            const energyMatch = text.match(/(\d+(?:\.\d+)?)\s*kwh(?:\/kg)?/);
-            if (energyMatch) {
-                const consumption = parseFloat(energyMatch[1]);
-                if (consumption < this.minElectrolysisKwhPerKg) {
-                    return {
-                        reason: RejectionReason.PHYSICAL_VIOLATION,
-                        detail: `Thermodynamic lower bound violation: water electrolysis requires at least ${this.minElectrolysisKwhPerKg} kWh/kg.`
-                    };
-                }
-            }
-
-            const solarMatch = text.match(/(\d+(?:\.\d+)?)\s*%/);
-            if (solarMatch && text.includes('single')) {
-                const efficiency = parseFloat(solarMatch[1]);
-                if (efficiency > this.maxSingleJunctionSolarEfficiency) {
-                    return {
-                        reason: RejectionReason.PHYSICAL_VIOLATION,
-                        detail: `Shockley-Queisser limit violation: single junction limit is ${this.maxSingleJunctionSolarEfficiency}%.`
-                    };
-                }
-            }
+            return this.checkClimatePhysicalBounds(text);
         }
+        return null;
+    }
 
+    private checkClimatePhysicalBounds(text: string): { reason: RejectionReason; detail: string } | null {
+        const energyMatch = text.match(/(\d+(?:\.\d+)?)\s*kwh(?:\/kg)?/);
+        if (energyMatch && parseFloat(energyMatch[1]) < this.minElectrolysisKwhPerKg) {
+            return {
+                reason: RejectionReason.PHYSICAL_VIOLATION,
+                detail: `Thermodynamic lower bound violation: water electrolysis requires at least ${this.minElectrolysisKwhPerKg} kWh/kg.`
+            };
+        }
+        const gjMatch = text.match(/(\d+(?:\.\d+)?)\s*gj(?:\/ton)?/);
+        if (gjMatch && parseFloat(gjMatch[1]) < 1.2) {
+            return {
+                reason: RejectionReason.PHYSICAL_VIOLATION,
+                detail: 'Desorption energy lower bound violation: direct air capture MOF sorbents require at least 1.2 GJ/ton thermal equivalent.'
+            };
+        }
+        const solarMatch = text.match(/(\d+(?:\.\d+)?)\s*%/);
+        if (solarMatch && text.includes('single') && parseFloat(solarMatch[1]) > this.maxSingleJunctionSolarEfficiency) {
+            return {
+                reason: RejectionReason.PHYSICAL_VIOLATION,
+                detail: `Shockley-Queisser limit violation: single junction limit is ${this.maxSingleJunctionSolarEfficiency}%.`
+            };
+        }
         return null;
     }
 
@@ -108,10 +111,17 @@ export class TriStateAdmissionController {
     ): { reason: RejectionReason; detail: string } | null {
         const text = `${claim.rawClaim} ${claim.object}`.toLowerCase();
 
-        if (text.includes('100%') || text.includes('zero hallucination')) {
+        if (text.includes('100%') || text.includes('zero hallucination') || text.includes('bug-free')) {
             return {
                 reason: RejectionReason.CAUSAL_INCONSISTENCY,
                 detail: 'Stochastic models exhibit non-zero failure rates without deterministic state tripwires.'
+            };
+        }
+
+        if (sector === 'fintech' && (text.includes('0% default') || text.includes('0.0% default') || text.includes('zero default'))) {
+            return {
+                reason: RejectionReason.CAUSAL_INCONSISTENCY,
+                detail: 'Credit underwriting carries structural non-zero default across macroeconomic credit cycles.'
             };
         }
 

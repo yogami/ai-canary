@@ -166,4 +166,53 @@ test.describe('AICanary Diligence Engine: Carlota Acceptance Suite', () => {
         await page.locator('button', { hasText: '✕ Close' }).click();
         await expect(page.locator('text=Empirical Diligence Benchmark & Evals')).not.toBeVisible();
     });
+
+    test('should evaluate a novel random startup and show regime shifts', async ({ page }) => {
+        // Click Random Novel Startup button
+        const randomBtn = page.locator('button', { hasText: 'Random Novel Startup' });
+        await expect(randomBtn).toBeVisible();
+        await randomBtn.click();
+
+        // Verify description textarea is populated
+        const textarea = page.locator('textarea');
+        const content = await textarea.inputValue();
+        expect(content.length).toBeGreaterThan(50);
+
+        // Run Due Diligence Gate
+        await page.locator('button', { hasText: 'Run Due Diligence Gate' }).click();
+        await expect(page.locator('text=Information Architecture Ablation Switcher')).toBeVisible({ timeout: 60000 });
+
+        // Verify Regime 3 has active IC Punch List
+        await expect(page.locator('text=Investment Committee Punch-List')).toBeVisible();
+
+        // Switch to Regime 0: verify Credulity Bias
+        await page.locator('button', { hasText: 'Regime 0' }).click();
+        await expect(page.locator('text=Regime 0: Raw Frontier Model')).toBeVisible();
+
+        // Switch to Regime 2: verify Write-Ahead Admission
+        await page.locator('button', { hasText: 'Regime 2' }).click();
+        await expect(page.locator('text=Regime 2: Write-Ahead Admission')).toBeVisible();
+    });
+
+    test('should accept and diligence a free-form custom startup pitch entered by the user', async ({ page }) => {
+        // Clear and type a completely novel user-authored pitch
+        const textarea = page.locator('textarea');
+        await textarea.fill('OmniDev: Autonomous AI software engineering agency that guarantees 100% bug-free deployments for $20/month per seat.');
+
+        // Select AI niche
+        await page.locator('button', { hasText: '🤖 AI / LLMs' }).click();
+
+        // Run Due Diligence Gate
+        await page.locator('button', { hasText: 'Run Due Diligence Gate' }).click();
+        await expect(page.locator('text=Information Architecture Ablation Switcher')).toBeVisible({ timeout: 60000 });
+
+        // Regime 3: check that 100% bug-free claim was quarantined as causal inconsistency
+        await page.locator('button', { hasText: 'Regime 2' }).click();
+        await expect(page.locator('text=Quarantined Assertions').first()).toBeVisible();
+        await expect(page.locator('text=CAUSAL_INCONSISTENCY').first()).toBeVisible();
+
+        // Switch to Regime 0: show that raw model failed to quarantine it
+        await page.locator('button', { hasText: 'Regime 0' }).click();
+        await expect(page.locator('text=Credulity Bias Failure')).toBeVisible();
+    });
 });
