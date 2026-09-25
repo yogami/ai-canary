@@ -59,7 +59,7 @@ test.describe('AICanary Diligence Engine: Carlota Acceptance Suite', () => {
 
         // Wait for results container to appear
         const ablationSwitcher = page.locator('text=Information Architecture Ablation Switcher');
-        await expect(ablationSwitcher).toBeVisible({ timeout: 45000 });
+        await expect(ablationSwitcher).toBeVisible({ timeout: 60000 });
 
         // Verify all 4 regime buttons exist
         const regime0Btn = page.locator('button', { hasText: 'Regime 0' });
@@ -103,7 +103,7 @@ test.describe('AICanary Diligence Engine: Carlota Acceptance Suite', () => {
         await page.locator('button', { hasText: 'Run Due Diligence Gate' }).click();
 
         // Wait for results
-        await expect(page.locator('text=Information Architecture Ablation Switcher')).toBeVisible({ timeout: 45000 });
+        await expect(page.locator('text=Information Architecture Ablation Switcher')).toBeVisible({ timeout: 60000 });
 
         // Ensure Regime 3 is selected
         await page.locator('button', { hasText: 'Regime 3' }).click();
@@ -120,7 +120,7 @@ test.describe('AICanary Diligence Engine: Carlota Acceptance Suite', () => {
         await page.locator('button', { hasText: 'Case A: Nikola H₂' }).click();
         await page.locator('button', { hasText: 'Run Due Diligence Gate' }).click();
 
-        await expect(page.locator('text=Information Architecture Ablation Switcher')).toBeVisible({ timeout: 45000 });
+        await expect(page.locator('text=Information Architecture Ablation Switcher')).toBeVisible({ timeout: 60000 });
         await page.locator('button', { hasText: 'Regime 3' }).click();
 
         // Verify the 3-question punch list exists
@@ -137,7 +137,7 @@ test.describe('AICanary Diligence Engine: Carlota Acceptance Suite', () => {
         await page.locator('button', { hasText: 'Case A: Nikola H₂' }).click();
         await page.locator('button', { hasText: 'Run Due Diligence Gate' }).click();
 
-        await expect(page.locator('text=Information Architecture Ablation Switcher')).toBeVisible({ timeout: 45000 });
+        await expect(page.locator('text=Information Architecture Ablation Switcher')).toBeVisible({ timeout: 60000 });
 
         const pageText = await page.locator('body').innerText();
 

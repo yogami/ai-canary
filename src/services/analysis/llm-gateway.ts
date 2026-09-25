@@ -15,7 +15,7 @@ export async function fetchFrontierAnalysis(
     const groqKey = process.env.GROQ_API_KEY;
 
     if (openRouterKey) {
-        const orResult = await executeOpenRouterCascade(systemPrompt, userPrompt, openRouterKey);
+        const orResult = await executeOpenRouter(systemPrompt, userPrompt, openRouterKey);
         if (orResult) return orResult;
     }
 
@@ -27,25 +27,22 @@ export async function fetchFrontierAnalysis(
     return null;
 }
 
-async function executeOpenRouterCascade(
+async function executeOpenRouter(
     systemPrompt: string,
     userPrompt: string,
     apiKey: string
 ): Promise<LLMAnalysisResponse | null> {
-    const models = ['anthropic/claude-sonnet-5', 'openai/gpt-5-mini'];
-
-    for (const model of models) {
-        try {
-            const res = await callOpenRouter(systemPrompt, userPrompt, model, apiKey);
-            if (res && res.ok) {
-                const data = await res.json();
-                const content = data.choices?.[0]?.message?.content;
-                const parsed = parseLLMJson(content);
-                if (parsed) return { analysis: parsed, provider: 'openrouter', model };
-            }
-        } catch {
-            // Cascade to next model
+    const model = 'anthropic/claude-3.5-sonnet';
+    try {
+        const res = await callOpenRouter(systemPrompt, userPrompt, model, apiKey);
+        if (res?.ok) {
+            const data = await res.json();
+            const content = data.choices?.[0]?.message?.content;
+            const parsed = parseLLMJson(content);
+            if (parsed) return { analysis: parsed, provider: 'openrouter', model };
         }
+    } catch {
+        // Fallback to next provider
     }
     return null;
 }
@@ -64,7 +61,7 @@ async function callOpenRouter(
             'HTTP-Referer': 'https://ai-canary-production.up.railway.app',
             'X-Title': 'AICanary'
         },
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(4000),
         body: JSON.stringify({
             model,
             messages: [
@@ -84,24 +81,19 @@ async function executeGroqCall(
     apiKey: string
 ): Promise<LLMAnalysisResponse | null> {
     try {
+        const payload = {
+            model: 'llama-3.3-70b-versatile',
+            messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
+            temperature: 0.2,
+            response_format: { type: 'json_object' }
+        };
+        const headers = { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
         const res = await fetch(GROQ_API_URL, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            signal: AbortSignal.timeout(15000),
-            body: JSON.stringify({
-                model: 'llama-3.3-70b-versatile',
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: userPrompt }
-                ],
-                temperature: 0.2,
-                response_format: { type: 'json_object' }
-            })
+            headers,
+            signal: AbortSignal.timeout(3500),
+            body: JSON.stringify(payload)
         });
-
         if (res.ok) {
             const data = await res.json();
             const parsed = parseLLMJson(data.choices?.[0]?.message?.content);
