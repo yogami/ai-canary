@@ -167,7 +167,7 @@ export class RegimeExecutionService {
 
     private evaluateCausalCheck(sector: string): CausalPreFlightResult {
         const scm = this.causalGate.buildDomainSCM(sector);
-        const inputs = sector === 'climate' || sector === 'energy'
+        const inputs: Record<string, number> = sector === 'climate' || sector === 'energy'
             ? { electricity_price: 120, stack_efficiency: 52, market_offtake_price: 2.0 }
             : { token_inference_cost: 0.005, agent_loop_iterations: 20, subscription_price_per_task: 0.05 };
         return this.causalGate.preFlightCheck(scm, inputs);

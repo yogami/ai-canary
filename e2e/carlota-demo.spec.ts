@@ -91,8 +91,8 @@ test.describe('AICanary Diligence Engine: Carlota Acceptance Suite', () => {
         // Switch to Regime 2 (Memory Quarantine)
         await regime2Btn.click();
         await expect(page.locator('text=Regime 2: Write-Ahead Admission')).toBeVisible();
-        await expect(page.locator('text=Verified & Plausible Claims')).toBeVisible();
-        await expect(page.locator('text=Quarantined Assertions')).toBeVisible();
+        await expect(page.locator('text=Verified & Plausible Claims').first()).toBeVisible();
+        await expect(page.locator('text=Quarantined Assertions').first()).toBeVisible();
     });
 
     test('should verify Thermodynamic Electricity Ceiling identity formula and tariff limits', async ({ page }) => {
@@ -149,5 +149,21 @@ test.describe('AICanary Diligence Engine: Carlota Acceptance Suite', () => {
         for (const word of bannedWords) {
             expect(pageText.toLowerCase()).not.toContain(word);
         }
+    });
+
+    test('should open Empirical Benchmark Evals modal and display comparative metrics across all 3 tracks', async ({ page }) => {
+        const benchmarkBtn = page.locator('button', { hasText: 'Benchmark Evals' });
+        await expect(benchmarkBtn).toBeVisible();
+        await benchmarkBtn.click();
+
+        await expect(page.locator('text=Empirical Diligence Benchmark & Evals')).toBeVisible();
+        await expect(page.locator('text=Track A: Raw Frontier Model')).toBeVisible();
+        await expect(page.locator('text=Track B: Unfiltered Context RAG')).toBeVisible();
+        await expect(page.locator('text=Track C: Full Agent Kernel')).toBeVisible();
+        await expect(page.locator('text=Theranos')).toBeVisible();
+        await expect(page.locator('text=Nikola H2')).toBeVisible();
+
+        await page.locator('button', { hasText: '✕ Close' }).click();
+        await expect(page.locator('text=Empirical Diligence Benchmark & Evals')).not.toBeVisible();
     });
 });

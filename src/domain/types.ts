@@ -124,6 +124,7 @@ export interface AnalysisResult {
     producerPanel?: ProducerEvaluation[];
     consensusScore?: number;
     brutalRealityCheck?: BrutalRealityCheck;
+    regimes?: Record<number, any>;
 }
 
 export type Niche = 'ai' | 'media' | 'music' | 'gaming' | 'fintech' | 'healthcare' | 'climate';
