@@ -45,5 +45,14 @@ function extractAIInputs(pitch: string): Record<string, number> {
         base.fixed_compute_cost = fixedCost;
     }
 
+    const marginMatch = text.match(/(\d+(?:\.\d+)?)\s*%\s*gross margin/);
+    if (marginMatch) {
+        const gm = parseFloat(marginMatch[1]);
+        if (gm > 50) {
+            base.subscription_price_per_task = 1.0;
+            base.fixed_compute_cost = Math.round((1.0 - (gm / 100)) * 100) / 100;
+        }
+    }
+
     return base;
 }
