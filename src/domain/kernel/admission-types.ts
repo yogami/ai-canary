@@ -2,6 +2,8 @@
  * Pure domain entities and value objects for the Agent Kernel admission control.
  */
 
+import { DiligenceRegime } from '../diligence-regime';
+
 export enum AdmissionStatus {
     PENDING = 'PENDING',
     PROMOTED = 'PROMOTED',
@@ -62,3 +64,22 @@ export interface BenchmarkMetric {
     contradictionLeakageRate: number;
     meanLatencyMs?: number;
 }
+
+export interface RegimeExecutionResult {
+    regime: DiligenceRegime;
+    regimeInsight: string;
+    canaryScore: { total: number; grade: string; verdict: string };
+    quarantine: {
+        verifiedClaims: Array<{ claim: string; basis: string; status: string }>;
+        quarantinedAssertions: Array<{ assertion: string; contradiction: string; severity: string; rejectionReason?: string }>;
+    };
+    causalSensitivity: {
+        criticalAssumption: string;
+        stressScenarios: Array<{ parameter: string; shift: string; impact: string }>;
+        breakEvenThreshold: string;
+    };
+    icPunchList: Array<{ question: string; targetRisk: string; whyItExposesFraud: string }>;
+    scmGraph?: StructuralCausalModel;
+    unfilteredSignalsCount?: number;
+}
+

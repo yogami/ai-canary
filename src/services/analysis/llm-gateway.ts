@@ -32,7 +32,7 @@ async function executeOpenRouter(
     userPrompt: string,
     apiKey: string
 ): Promise<LLMAnalysisResponse | null> {
-    const model = 'anthropic/claude-3.5-sonnet';
+    const model = 'anthropic/claude-sonnet-5';
     try {
         const res = await callOpenRouter(systemPrompt, userPrompt, model, apiKey);
         if (res?.ok) {
@@ -61,7 +61,7 @@ async function callOpenRouter(
             'HTTP-Referer': 'https://ai-canary-production.up.railway.app',
             'X-Title': 'AICanary'
         },
-        signal: AbortSignal.timeout(4000),
+        signal: AbortSignal.timeout(18000),
         body: JSON.stringify({
             model,
             messages: [
@@ -91,7 +91,7 @@ async function executeGroqCall(
         const res = await fetch(GROQ_API_URL, {
             method: 'POST',
             headers,
-            signal: AbortSignal.timeout(3500),
+            signal: AbortSignal.timeout(8000),
             body: JSON.stringify(payload)
         });
         if (res.ok) {

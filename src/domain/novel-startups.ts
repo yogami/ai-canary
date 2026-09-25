@@ -110,30 +110,30 @@ Core Pitch Assertions:
 - Viable Contribution Margin: Charges $0.15 per compilation run, yielding a 78% unit gross contribution margin over underlying token costs.`
     },
     {
-        id: 'novelNanoCredit',
-        title: '💳 Novel: NanoCredit Algorithmic',
-        tag: 'Algorithmic Lending',
-        tagColor: 'text-indigo-300 bg-indigo-500/20 border-indigo-500/40',
-        sector: 'Fintech & Lending',
-        summary: 'Autonomous micro-lending algorithm claiming 0% default rate through proprietary social graph embeddings.',
-        niche: 'fintech',
+        id: 'novelFormIron',
+        title: '🔋 Novel: FormIron Storage',
+        tag: 'Long-Duration Energy Storage',
+        tagColor: 'text-emerald-300 bg-emerald-500/20 border-emerald-500/40',
+        sector: 'Clean Energy & Decarbonization',
+        summary: 'Multi-day energy storage using 100-hour reversible iron oxidation passing levelized storage bounds at $20/kWh.',
+        niche: 'climate',
         contextFields: {
-            sector: 'Automated Credit Underwriting',
-            pricing: '2.5% transaction spread',
-            targetAudience: 'Underbanked micro-entrepreneurs in emerging markets',
-            defaultRate: '0.0% claimed historical default'
+            sector: 'Long-Duration Energy Storage (LDES)',
+            duration: '100 hours discharge',
+            targetCost: '$20/kWh module capital cost',
+            chemistry: 'Reversible iron-air rust cycle'
         },
-        description: `NanoCredit: Zero-Default Algorithmic Micro-Lending Platform
+        description: `FormIron: Multi-Day Iron-Air Battery for Long-Duration Grid Storage
 
 The Problem:
-Traditional credit scoring models require multi-year banking history, excluding millions of creditworthy micro-merchants from working capital.
+Lithium-ion batteries are economically limited to 4 to 8 hours of discharge, leaving utility grids reliant on fossil peakers during multi-day renewable lulls.
 
 Claimed Solution:
-NanoCredit uses graph neural networks over phone usage and merchant social graphs to disburse instant working capital loans.
+FormIron uses abundant iron, air, and water to execute a reversible rusting reaction delivering 100 hours of continuous energy storage at 10% the cost of lithium.
 
 Core Pitch Assertions:
-- Risk Elimination: Proprietary social graph collateral algorithm guarantees 0.0% credit default across all economic cycles.
-- Instant Disbursement: Disburses loans in 3 seconds with automated smart contract escrow and recovery.
-- Uncapped Margin: Earns 25% annualized APR with zero loan loss reserve provisions required on the balance sheet.`
+- Abundant Earth Materials: Utilizes cheap, non-toxic metallic iron pellets and ambient atmospheric oxygen with zero nickel or cobalt.
+- Multi-Day Discharge: Delivers 100 hours of continuous rated electrical discharge to bridge renewable intermittency.
+- Sub-$20/kWh Levelized CapEx: Modular battery enclosures achieve $20/kWh installed storage cost, satisfying utility capacity gates.`
     }
 ];

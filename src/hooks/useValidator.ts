@@ -19,7 +19,7 @@ interface UseValidatorProps {
 }
 
 export function useValidator({ stories, onFilter }: UseValidatorProps) {
-    const [selectedNiche, setSelectedNiche] = useState<Niche>('ai');
+    const [selectedNiche, setSelectedNiche] = useState<Niche>('climate');
     const [projectDescription, setProjectDescription] = useState('');
     const [contextFields, setContextFields] = useState<Record<string, string>>({});
     const [isAnalyzing, setIsAnalyzing] = useState(false);

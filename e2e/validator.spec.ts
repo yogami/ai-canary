@@ -19,8 +19,7 @@ test.describe('AICanary Intelligent Validator', () => {
         await expect(validatorPanel).toBeVisible({ timeout: 10000 });
 
         // Check niche buttons exist
-        await expect(page.getByRole('button', { name: /AI\/Tech/ })).toBeVisible();
-        await expect(page.getByRole('button', { name: /Media/ })).toBeVisible();
+        await expect(page.getByRole('button', { name: /AI & DeepTech/ })).toBeVisible();
         await expect(page.getByRole('button', { name: /Climate/ })).toBeVisible();
 
         // Check description textarea exists
@@ -31,8 +30,8 @@ test.describe('AICanary Intelligent Validator', () => {
     });
 
     test('should validate an AI business idea successfully', async ({ page }) => {
-        // Select AI/Tech niche
-        await page.getByRole('button', { name: /AI\/Tech/ }).click();
+        // Select AI niche
+        await page.getByRole('button', { name: /AI & DeepTech/ }).click();
 
         // Enter a business idea
         const businessIdea = `AI code review assistant that detects security vulnerabilities in pull requests. Target: DevOps teams.`;
@@ -72,24 +71,6 @@ test.describe('AICanary Intelligent Validator', () => {
         await expect(page.locator('text=Strategic Recommendation')).toBeVisible();
 
         console.log('✅ Climate idea validation passed!');
-    });
-
-    test('should validate a Media idea', async ({ page }) => {
-        // Select Media niche
-        await page.getByRole('button', { name: /Media/ }).click();
-
-        // Enter media idea (simpler)
-        const mediaIdea = `AI script analyzer for film productions that predicts commercial viability.`;
-
-        await page.getByRole('textbox', { name: /Describe your project/ }).fill(mediaIdea);
-
-        // Click validate
-        await page.getByRole('button', { name: /Validate My Idea/ }).click();
-
-        // Wait for results
-        await expect(page.locator('text=Market Timing:')).toBeVisible({ timeout: 45000 });
-
-        console.log('✅ Media idea validation passed!');
     });
 
     test('should show analysis results with all sections', async ({ page }) => {

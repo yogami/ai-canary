@@ -3,30 +3,15 @@ import {
     CandidateClaim,
     AdmissionStatus,
     StructuralCausalModel,
-    RejectionReason
+    RejectionReason,
+    RegimeExecutionResult
 } from '../../domain/kernel/admission-types';
-import { TriStateAdmissionController, PartitionedClaims } from './TriStateAdmissionController';
-import { CausalPreFlightGate, CausalPreFlightResult } from './CausalPreFlightGate';
+import { TriStateAdmissionController } from './TriStateAdmissionController';
+import { CausalPreFlightGate } from './CausalPreFlightGate';
 import { getDomainICPunchList } from '../../domain/kernel/ic-punch-list';
 import { extractCausalInputs } from './causal-input-extractor';
 
-export interface RegimeExecutionResult {
-    regime: DiligenceRegime;
-    regimeInsight: string;
-    canaryScore: { total: number; grade: string; verdict: string };
-    quarantine: {
-        verifiedClaims: Array<{ claim: string; basis: string; status: string }>;
-        quarantinedAssertions: Array<{ assertion: string; contradiction: string; severity: string; rejectionReason?: string }>;
-    };
-    causalSensitivity: {
-        criticalAssumption: string;
-        stressScenarios: Array<{ parameter: string; shift: string; impact: string }>;
-        breakEvenThreshold: string;
-    };
-    icPunchList: Array<{ question: string; targetRisk: string; whyItExposesFraud: string }>;
-    scmGraph?: StructuralCausalModel;
-    unfilteredSignalsCount?: number;
-}
+export type { RegimeExecutionResult };
 
 export class RegimeExecutionService {
     private readonly admissionController: TriStateAdmissionController;
@@ -47,7 +32,7 @@ export class RegimeExecutionService {
 
         switch (regime) {
             case DiligenceRegime.RAW_MODEL:
-                return this.buildRegime0Result(candidateClaims);
+                return this.buildRegime0Result(candidateClaims, pitch);
             case DiligenceRegime.TOOL_RETRIEVAL:
                 return this.buildRegime1Result(candidateClaims, stories);
             case DiligenceRegime.MEMORY_QUARANTINE:
@@ -79,14 +64,19 @@ export class RegimeExecutionService {
         return claims;
     }
 
-    private buildRegime0Result(claims: CandidateClaim[]): RegimeExecutionResult {
+    private buildRegime0Result(claims: CandidateClaim[], pitch: string): RegimeExecutionResult {
+        const claimsBonus = Math.min(claims.length * 15, 120);
+        const lengthBonus = Math.min(Math.floor(pitch.length / 50), 60);
+        const score = Math.min(880, Math.max(720, 710 + claimsBonus + lengthBonus));
+        const grade = score >= 800 ? 'A-' : 'B+';
+
         return {
             regime: DiligenceRegime.RAW_MODEL,
             regimeInsight: 'Credulity Bias: raw unconstrained model accepts claims without admission gates.',
             canaryScore: {
-                total: 780,
-                grade: 'B+',
-                verdict: 'Linguistically plausible pitch accepted by foundation model without verification.'
+                total: score,
+                grade,
+                verdict: `Linguistically plausible pitch accepted by foundation model (${claims.length} assertions unverified).`
             },
             quarantine: {
                 verifiedClaims: this.mapVerified(claims, 'Model assumption', 'UNVERIFIED_ACCEPTANCE'),
@@ -101,14 +91,32 @@ export class RegimeExecutionService {
         };
     }
 
+    private calculateRegime1Score(stories: any[], claimsCount: number): { score: number; grade: string } {
+        let sentimentAdj = 0;
+        if (stories.length > 0) {
+            const sum = stories.reduce((acc, s) => {
+                const val = typeof s.sentiment === 'number' ? s.sentiment : (s.sentimentScore || 0);
+                return acc + val;
+            }, 0);
+            sentimentAdj = Math.round((sum / stories.length) * 40);
+        }
+        const penalty = Math.min(claimsCount * 4, 30);
+        const score = Math.min(690, Math.max(530, 620 + sentimentAdj - penalty));
+        const grade = score >= 640 ? 'B-' : score >= 580 ? 'C+' : 'C';
+        return { score, grade };
+    }
+
     private buildRegime1Result(claims: CandidateClaim[], stories: any[]): RegimeExecutionResult {
+        const signalCount = stories.length || 3;
+        const { score, grade } = this.calculateRegime1Score(stories, claims.length);
+
         return {
             regime: DiligenceRegime.TOOL_RETRIEVAL,
             regimeInsight: 'Unfiltered Context: retrieved market data fed into context without contradiction isolation.',
             canaryScore: {
-                total: 650,
-                grade: 'C+',
-                verdict: 'RAG retrieved market signals but rationalizes conflicting statements into narrative.'
+                total: score,
+                grade,
+                verdict: `RAG retrieved ${signalCount} market signal(s) but rationalized conflicting statements into narrative.`
             },
             quarantine: {
                 verifiedClaims: this.mapVerified(claims, 'Retrieved news context', 'POTENTIAL_ENTANGLEMENT'),
@@ -120,7 +128,7 @@ export class RegimeExecutionService {
                 breakEvenThreshold: 'Uncalculated in Regime 1'
             },
             icPunchList: [],
-            unfilteredSignalsCount: stories.length || 3
+            unfilteredSignalsCount: signalCount
         };
     }
 
@@ -164,14 +172,7 @@ export class RegimeExecutionService {
         const quarantined = this.mapQuarantined(partitioned.rejected);
 
         if (!causalCheck.isAdmitted && causalCheck.violations.length > 0) {
-            for (const v of causalCheck.violations) {
-                quarantined.push({
-                    assertion: 'Economic Identity Inconsistency',
-                    contradiction: v,
-                    severity: 'CRITICAL',
-                    rejectionReason: RejectionReason.CAUSAL_INCONSISTENCY
-                });
-            }
+            this.appendCausalViolations(causalCheck.violations, quarantined);
         }
 
         return {
@@ -192,6 +193,17 @@ export class RegimeExecutionService {
             icPunchList: getDomainICPunchList(sector),
             scmGraph: scm
         };
+    }
+
+    private appendCausalViolations(violations: string[], quarantined: any[]) {
+        for (const v of violations) {
+            quarantined.push({
+                assertion: 'Economic Identity Inconsistency',
+                contradiction: v,
+                severity: 'CRITICAL',
+                rejectionReason: RejectionReason.CAUSAL_INCONSISTENCY
+            });
+        }
     }
 
     private buildScore(isAdmitted: boolean) {

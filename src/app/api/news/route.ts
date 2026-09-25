@@ -4,16 +4,18 @@ export const dynamic = 'force-dynamic';
 
 const ASKNEWS_API_KEY = process.env.ASKNEWS_API_KEY;
 
-interface AskNewsStory {
-    uuid: string;
-    headline?: string;
-    keywords?: string[];
+interface AskNewsArticle {
+    article_id?: string;
+    uuid?: string;
+    title?: string;
+    eng_title?: string;
     summary?: string;
-    sentiment?: number[];
-    n_articles?: number[];
-    categories?: string[];
-    topics?: string[];
-    updated_ts?: number;
+    key_points?: string[];
+    sentiment?: number | number[];
+    pub_date?: string;
+    keywords?: string[];
+    classification?: string;
+    article_url?: string;
 }
 
 interface TransformedStory {
@@ -26,127 +28,109 @@ interface TransformedStory {
     publish_date: string;
 }
 
-function transformStory(story: AskNewsStory): TransformedStory {
-    // Create headline from keywords if not provided
-    const headline = story.headline ||
-        (story.keywords ? story.keywords.slice(0, 5).join(' • ') : 'AI News Update');
+function extractHeadline(article: AskNewsArticle): string {
+    if (article.eng_title) return article.eng_title;
+    if (article.title) return article.title;
+    if (article.keywords && article.keywords.length > 0) {
+        return article.keywords.slice(0, 4).join(' • ');
+    }
+    return 'Market Intelligence Signal';
+}
 
-    // Create summary from topics if available
-    const summary = story.summary ||
-        (story.topics ? `Topics: ${story.topics.slice(0, 3).join(', ')}` :
-            (story.keywords ? `Key terms: ${story.keywords.slice(0, 6).join(', ')}` : ''));
+function extractSummary(article: AskNewsArticle): string {
+    if (article.summary) return article.summary;
+    if (article.key_points && article.key_points.length > 0) {
+        return article.key_points.slice(0, 2).join(' ');
+    }
+    return '';
+}
 
-    // Get sentiment (API returns array, we take first value)
-    const sentiment = story.sentiment && story.sentiment.length > 0
-        ? story.sentiment[0]
-        : 0;
+function extractSentiment(article: AskNewsArticle): number {
+    if (typeof article.sentiment === 'number') {
+        return article.sentiment;
+    }
+    if (Array.isArray(article.sentiment) && article.sentiment.length > 0) {
+        return article.sentiment[0];
+    }
+    return 0;
+}
 
-    // Coverage based on article count
-    const coverage = story.n_articles && story.n_articles.length > 0
-        ? Math.min(story.n_articles[0], 100)
-        : 50;
+function transformArticle(article: AskNewsArticle, index: number): TransformedStory {
+    const headline = extractHeadline(article);
+    const summary = extractSummary(article);
+    const sentiment = extractSentiment(article);
+    const categories = article.keywords && article.keywords.length > 0
+        ? article.keywords.slice(0, 3)
+        : [article.classification || 'CleanTech'];
 
     return {
-        uuid: story.uuid,
+        uuid: article.article_id || article.uuid || `news-item-${index}-${Date.now()}`,
         headline,
         summary,
         sentiment,
-        coverage,
-        categories: story.categories || ['AI'],
-        publish_date: story.updated_ts
-            ? new Date(story.updated_ts * 1000).toISOString()
-            : new Date().toISOString(),
+        coverage: 85,
+        categories,
+        publish_date: article.pub_date || new Date().toISOString()
     };
+}
+
+function resolveSearchQuery(categoryParam: string, queryParam: string | null): string {
+    if (queryParam) return queryParam;
+    const cat = categoryParam.toLowerCase();
+    if (cat.includes('ai') || cat.includes('tech') || cat.includes('software')) {
+        return 'artificial intelligence software agent verification';
+    }
+    return 'climate clean energy storage decarbonization';
 }
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
-    const category = searchParams.get('category') || 'Technology';
+    const category = searchParams.get('category') || 'Climate';
+    const userQuery = searchParams.get('query');
+    const searchQuery = resolveSearchQuery(category, userQuery);
+
+    if (!ASKNEWS_API_KEY) {
+        return NextResponse.json(
+            { error: 'ASKNEWS_API_KEY is not configured on the server environment' },
+            { status: 503 }
+        );
+    }
 
     try {
-        // Using the AskNews Stories API to get hot tech stories
-        const response = await fetch(
-            `https://api.asknews.app/v1/stories?categories=${encodeURIComponent(category)}&limit=10`,
-            {
-                headers: {
-                    'Authorization': `Bearer ${ASKNEWS_API_KEY}`,
-                    'Accept': 'application/json',
-                },
-            }
-        );
+        const url = `https://api.asknews.app/v1/news/search?query=${encodeURIComponent(searchQuery)}&limit=10`;
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${ASKNEWS_API_KEY}`,
+                'Accept': 'application/json'
+            },
+            signal: AbortSignal.timeout(10000)
+        });
 
         if (!response.ok) {
-            console.error('AskNews API error:', response.status, await response.text());
-            throw new Error(`AskNews API error: ${response.status}`);
+            const errorDetails = await response.text();
+            console.error('AskNews API responded with error status:', response.status, errorDetails);
+            return NextResponse.json(
+                { error: `AskNews service returned HTTP ${response.status}`, detail: errorDetails },
+                { status: response.status }
+            );
         }
 
-        const data = await response.json();
-        const rawStories: AskNewsStory[] = data.stories || [];
-
-        // Transform stories to our frontend format
-        const stories = rawStories.map(transformStory);
+        const payload = await response.json();
+        const articles: AskNewsArticle[] = payload.as_dicts || [];
+        const stories = articles.map((article, idx) => transformArticle(article, idx));
 
         return NextResponse.json({
             success: true,
             source: 'asknews',
+            query: searchQuery,
             count: stories.length,
-            stories,
+            stories
         });
-
-    } catch (error) {
-        console.error('AskNews API Error:', error);
-
-        // Return mock data for demo purposes when API fails
-        return NextResponse.json({
-            success: true,
-            source: 'mock',
-            stories: [
-                {
-                    uuid: '1',
-                    headline: 'OpenAI Releases GPT-5 with Groundbreaking Reasoning Capabilities',
-                    summary: 'OpenAI unveils GPT-5, featuring enhanced logical reasoning and multi-modal understanding.',
-                    sentiment: 0.8,
-                    coverage: 95,
-                    publish_date: new Date().toISOString(),
-                    categories: ['AI', 'Technology'],
-                },
-                {
-                    uuid: '2',
-                    headline: 'Anthropic Launches Claude 4 with Extended Context Window',
-                    summary: 'Claude 4 introduces a 1M token context window for document analysis.',
-                    sentiment: 0.75,
-                    coverage: 88,
-                    publish_date: new Date().toISOString(),
-                    categories: ['AI', 'LLM'],
-                },
-                {
-                    uuid: '3',
-                    headline: 'Google DeepMind Achieves AGI Milestone with Gemini Ultra 2',
-                    summary: 'Gemini Ultra 2 demonstrates unprecedented general intelligence.',
-                    sentiment: 0.85,
-                    coverage: 92,
-                    publish_date: new Date().toISOString(),
-                    categories: ['AI', 'Research'],
-                },
-                {
-                    uuid: '4',
-                    headline: 'Meta Open-Sources Llama 4 with MoE Architecture',
-                    summary: 'Llama 4 becomes the most capable open-source model.',
-                    sentiment: 0.7,
-                    coverage: 78,
-                    publish_date: new Date().toISOString(),
-                    categories: ['AI', 'Open Source'],
-                },
-                {
-                    uuid: '5',
-                    headline: 'Mistral AI Raises €1B Series C at €10B Valuation',
-                    summary: 'European AI leader closes massive funding round.',
-                    sentiment: 0.65,
-                    coverage: 72,
-                    publish_date: new Date().toISOString(),
-                    categories: ['AI', 'Funding'],
-                },
-            ],
-        });
+    } catch (error: any) {
+        console.error('AskNews search request failed:', error);
+        return NextResponse.json(
+            { error: 'AskNews news search request timed out or failed', detail: error.message },
+            { status: 502 }
+        );
     }
 }

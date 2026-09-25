@@ -7,14 +7,17 @@ test.describe('BenchmarkService', () => {
 
     test('should load historical diligence benchmark corpus with ground truth labels', () => {
         const corpus = service.getHistoricalCorpus();
-        expect(corpus.length).toBe(5);
+        expect(corpus.length).toBe(25);
 
         const names = corpus.map(c => c.name);
         expect(names).toContain('Theranos');
         expect(names).toContain('Nikola H2');
         expect(names).toContain('Lilium Aviation');
         expect(names).toContain('Solyndra');
-        expect(names).toContain('Enterprise B2B SaaS');
+        expect(names).toContain('First Solar CdTe');
+        expect(names).toContain('Form Energy');
+        expect(names).toContain('Climeworks');
+        expect(names).toContain('SpecGuard AI');
     });
 
     test('should evaluate historical corpus under Regime 0 demonstrating high false positive rate', () => {

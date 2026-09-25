@@ -3,6 +3,7 @@ import {
     RejectionReason,
     CandidateClaim
 } from '../../domain/kernel/admission-types';
+import { evaluatePhysicalBounds } from './physical-bounds-evaluator';
 
 export interface PartitionedClaims {
     promoted: CandidateClaim[];
@@ -12,8 +13,6 @@ export interface PartitionedClaims {
 
 export class TriStateAdmissionController {
     private readonly minConfidenceThreshold = 0.6;
-    private readonly minElectrolysisKwhPerKg = 39.4;
-    private readonly maxSingleJunctionSolarEfficiency = 33.7;
 
     public evaluateClaim(claim: CandidateClaim, sector: string): CandidateClaim {
         const schemaError = this.checkSchema(claim);
@@ -74,69 +73,7 @@ export class TriStateAdmissionController {
         sector: string
     ): { reason: RejectionReason; detail: string } | null {
         const text = `${claim.rawClaim} ${claim.object}`.toLowerCase();
-        if (sector === 'climate' || sector === 'energy') {
-            return this.checkClimatePhysicalBounds(text);
-        }
-        if (sector === 'healthcare' || sector === 'medtech') {
-            return this.checkHealthcareBounds(text);
-        }
-        if (sector === 'aviation' || sector === 'transport') {
-            return this.checkAviationBounds(text);
-        }
-        return null;
-    }
-
-    private checkHealthcareBounds(text: string): { reason: RejectionReason; detail: string } | null {
-        const hasSmallSample = text.includes('finger-stick') || text.includes('nanotainer') || text.includes('single drop');
-        const hasHighTests = text.includes('240') || text.match(/\b(?:5[0-9]|[6-9][0-9]|\d{3,})\s*tests\b/);
-        if (hasSmallSample && hasHighTests) {
-            return {
-                reason: RejectionReason.PHYSICAL_VIOLATION,
-                detail: 'Microfluidic volume violation: capillary blood volume cannot support over 50 distinct quantitative assay panels.'
-            };
-        }
-        return null;
-    }
-
-    private checkAviationBounds(text: string): { reason: RejectionReason; detail: string } | null {
-        if (text.includes('ducted fan') || text.includes('inter-city passenger flights')) {
-            return {
-                reason: RejectionReason.PHYSICAL_VIOLATION,
-                detail: 'Disc loading power bound: ducted fan vertical lift requires battery specific energy exceeding commercial cell limits.'
-            };
-        }
-        return null;
-    }
-
-    private checkClimatePhysicalBounds(text: string): { reason: RejectionReason; detail: string } | null {
-        const energyMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:kwh|kilowatt[- ]hours?)(?:\/kg)?/);
-        if (energyMatch && parseFloat(energyMatch[1]) < this.minElectrolysisKwhPerKg) {
-            return {
-                reason: RejectionReason.PHYSICAL_VIOLATION,
-                detail: `Thermodynamic lower bound violation: water electrolysis requires at least ${this.minElectrolysisKwhPerKg} kWh/kg.`
-            };
-        }
-        const gjMatch = text.match(/(\d+(?:\.\d+)?)\s*gj(?:\/ton)?/);
-        if (gjMatch && parseFloat(gjMatch[1]) < 1.2) {
-            return {
-                reason: RejectionReason.PHYSICAL_VIOLATION,
-                detail: 'Desorption energy lower bound violation: direct air capture MOF sorbents require at least 1.2 GJ/ton thermal equivalent.'
-            };
-        }
-        const solarMatch = text.match(/(\d+(?:\.\d+)?)\s*%/);
-        if (solarMatch && text.includes('single') && parseFloat(solarMatch[1]) > this.maxSingleJunctionSolarEfficiency) {
-            return {
-                reason: RejectionReason.PHYSICAL_VIOLATION,
-                detail: `Shockley-Queisser limit violation: single junction limit is ${this.maxSingleJunctionSolarEfficiency}%.`
-            };
-        }
-        if (text.includes('cigs') || text.includes('thin-film') || text.includes('solar tubes')) {
-            return {
-                reason: RejectionReason.PHYSICAL_VIOLATION,
-                detail: 'Silicon cost curve inversion: crystalline silicon CapEx collapse eliminated thin-film tubular margin advantage.'
-            };
-        }
-        return null;
+        return evaluatePhysicalBounds(text, sector);
     }
 
     private checkCausalConsistency(
