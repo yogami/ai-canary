@@ -54,12 +54,33 @@ export class CausalPreFlightGate {
         return results;
     }
 
+    public buildStressScenarios(
+        sector: string,
+        inputs: Record<string, number>
+    ): Array<{ parameter: string; shift: string; impact: string }> {
+        if (sector === 'climate' || sector === 'energy') {
+            const sweep = this.runSensitivitySweep('electricity_price', [10, 30, 60, 100], inputs, 'climate');
+            return sweep.map((pt) => ({
+                parameter: `Power @ €${pt.parameterValue}/MWh`,
+                shift: `Margin: €${pt.grossMargin}/kg`,
+                impact: pt.isSolvent ? 'Solvent operation' : 'Insolvent bankruptcy cliff'
+            }));
+        }
+
+        const sweep = this.runSensitivitySweep('token_inference_cost', [0.001, 0.003, 0.006, 0.015], inputs, 'ai');
+        return sweep.map((pt) => ({
+            parameter: `Token Rate @ $${pt.parameterValue}/1k`,
+            shift: `Margin: $${pt.grossMargin}/task`,
+            impact: pt.isSolvent ? 'Solvent operation' : 'Insolvent unit economics failure'
+        }));
+    }
+
     private calculateAIMargin(inputs: Record<string, number>): number {
         const tokenRate = inputs.token_inference_cost || 0.002;
         const turns = inputs.agent_loop_iterations || 15;
         const estTokensPerTurn = 1500;
         const totalTokens = (turns * estTokensPerTurn) / 1000;
-        const computeCost = totalTokens * tokenRate;
+        const computeCost = inputs.fixed_compute_cost !== undefined ? inputs.fixed_compute_cost : totalTokens * tokenRate;
         const rev = inputs.subscription_price_per_task || 0.05;
         return rev - computeCost;
     }
@@ -129,8 +150,8 @@ export class CausalPreFlightGate {
         const turns = inputs.agent_loop_iterations || 10;
         const estTokensPerTurn = 1500;
         const totalTokens = (turns * estTokensPerTurn) / 1000;
-        const computeCost = totalTokens * tokenRate;
-        const rev = inputs.subscription_price_per_task || 0.10;
+        const computeCost = inputs.fixed_compute_cost !== undefined ? inputs.fixed_compute_cost : totalTokens * tokenRate;
+        const rev = inputs.subscription_price_per_task || 0.05;
         const margin = rev - computeCost;
         const violations: string[] = [];
 

@@ -66,17 +66,51 @@ export class BenchmarkService {
     }
 
     public evaluateCorpusAgainstRegime(regime: DiligenceRegime): BenchmarkMetric {
-        switch (regime) {
-            case DiligenceRegime.RAW_MODEL:
-                return this.buildMetric('Track A: Raw Frontier Model', 0.20, 0.80, 0.0, 0.80, 1450);
-            case DiligenceRegime.TOOL_RETRIEVAL:
-                return this.buildMetric('Track B: Unfiltered Context RAG', 0.40, 0.60, 0.0, 0.60, 3200);
-            case DiligenceRegime.MEMORY_QUARANTINE:
-                return this.buildMetric('Track C-Lite: Memory Quarantine', 0.80, 0.20, 0.0, 0.20, 2100);
-            case DiligenceRegime.FULL_DILIGENCE_GATE:
-            default:
-                return this.buildMetric('Track C: Full Agent Kernel', 1.0, 0.0, 0.0, 0.0, 2450);
+        const trackNames: Record<DiligenceRegime, string> = {
+            [DiligenceRegime.RAW_MODEL]: 'Track A: Raw Frontier Model',
+            [DiligenceRegime.TOOL_RETRIEVAL]: 'Track B: Unfiltered Context RAG',
+            [DiligenceRegime.MEMORY_QUARANTINE]: 'Track C-Lite: Memory Quarantine',
+            [DiligenceRegime.FULL_DILIGENCE_GATE]: 'Track C: Full Agent Kernel'
+        };
+
+        const startTime = Date.now();
+        let correctCount = 0;
+        let falsePositives = 0;
+        let falseNegatives = 0;
+        let leakedContradictions = 0;
+
+        const totalNegatives = HISTORICAL_CORPUS.filter((c) => !c.expectedSolvent).length;
+        const totalPositives = HISTORICAL_CORPUS.filter((c) => c.expectedSolvent).length;
+
+        for (const item of HISTORICAL_CORPUS) {
+            const res = this.regimeService.executeRegime(regime, item.pitch, item.sector, []);
+            const isPredictedSolvent = res.canaryScore.grade !== 'F' && res.canaryScore.total >= 600;
+
+            if (isPredictedSolvent === item.expectedSolvent) {
+                correctCount++;
+            } else if (isPredictedSolvent && !item.expectedSolvent) {
+                falsePositives++;
+            } else if (!isPredictedSolvent && item.expectedSolvent) {
+                falseNegatives++;
+            }
+
+            if (!item.expectedSolvent && res.quarantine.quarantinedAssertions.length === 0) {
+                leakedContradictions++;
+            }
         }
+
+        const total = HISTORICAL_CORPUS.length;
+        const elapsed = Math.max(12, Date.now() - startTime);
+
+        return {
+            track: trackNames[regime],
+            sampleCount: total,
+            accuracy: Math.round((correctCount / total) * 100) / 100,
+            falsePositiveRate: totalNegatives > 0 ? Math.round((falsePositives / totalNegatives) * 100) / 100 : 0,
+            falseNegativeRate: totalPositives > 0 ? Math.round((falseNegatives / totalPositives) * 100) / 100 : 0,
+            contradictionLeakageRate: totalNegatives > 0 ? Math.round((leakedContradictions / totalNegatives) * 100) / 100 : 0,
+            meanLatencyMs: Math.round(elapsed / total)
+        };
     }
 
     public getComparativeMetrics(): BenchmarkMetric[] {
@@ -85,24 +119,5 @@ export class BenchmarkService {
             this.evaluateCorpusAgainstRegime(DiligenceRegime.TOOL_RETRIEVAL),
             this.evaluateCorpusAgainstRegime(DiligenceRegime.FULL_DILIGENCE_GATE)
         ];
-    }
-
-    private buildMetric(
-        track: string,
-        accuracy: number,
-        fpRate: number,
-        fnRate: number,
-        leakageRate: number,
-        latencyMs: number
-    ): BenchmarkMetric {
-        return {
-            track,
-            sampleCount: 5,
-            accuracy,
-            falsePositiveRate: fpRate,
-            falseNegativeRate: fnRate,
-            contradictionLeakageRate: leakageRate,
-            meanLatencyMs: latencyMs
-        };
     }
 }

@@ -2,11 +2,13 @@ import { DiligenceRegime } from '../../domain/diligence-regime';
 import {
     CandidateClaim,
     AdmissionStatus,
-    StructuralCausalModel
+    StructuralCausalModel,
+    RejectionReason
 } from '../../domain/kernel/admission-types';
 import { TriStateAdmissionController, PartitionedClaims } from './TriStateAdmissionController';
 import { CausalPreFlightGate, CausalPreFlightResult } from './CausalPreFlightGate';
 import { getDomainICPunchList } from '../../domain/kernel/ic-punch-list';
+import { extractCausalInputs } from './causal-input-extractor';
 
 export interface RegimeExecutionResult {
     regime: DiligenceRegime;
@@ -52,7 +54,7 @@ export class RegimeExecutionService {
                 return this.buildRegime2Result(candidateClaims, sector);
             case DiligenceRegime.FULL_DILIGENCE_GATE:
             default:
-                return this.buildRegime3Result(candidateClaims, sector);
+                return this.buildRegime3Result(candidateClaims, sector, pitch);
         }
     }
 
@@ -124,11 +126,21 @@ export class RegimeExecutionService {
 
     private buildRegime2Result(claims: CandidateClaim[], sector: string): RegimeExecutionResult {
         const partitioned = this.admissionController.evaluateClaims(claims, sector);
+        const total = partitioned.promoted.length + partitioned.rejected.length;
+        const passRatio = total > 0 ? partitioned.promoted.length / total : 1;
+        const totalScore = Math.round(280 + (passRatio * 440));
+        const grade = totalScore >= 700 ? 'B+' : totalScore >= 600 ? 'B' : totalScore >= 500 ? 'C' : 'D';
 
         return {
             regime: DiligenceRegime.MEMORY_QUARANTINE,
             regimeInsight: 'Admission Control: tri-state memory gates isolated unphysical claims into quarantine.',
-            canaryScore: { total: 480, grade: 'D', verdict: 'Claims partitioned into verified versus quarantined states.' },
+            canaryScore: {
+                total: totalScore,
+                grade: (grade as 'B+' | 'B' | 'C' | 'D'),
+                verdict: partitioned.rejected.length === 0
+                    ? 'All assertions admitted through truth gates'
+                    : `${partitioned.rejected.length} unphysical assertion(s) quarantined`
+            },
             quarantine: {
                 verifiedClaims: this.mapVerified(partitioned.promoted, 'Passed admission bounds', 'PROMOTED'),
                 quarantinedAssertions: this.mapQuarantined(partitioned.rejected)
@@ -142,12 +154,25 @@ export class RegimeExecutionService {
         };
     }
 
-    private buildRegime3Result(claims: CandidateClaim[], sector: string): RegimeExecutionResult {
+    private buildRegime3Result(claims: CandidateClaim[], sector: string, pitch: string): RegimeExecutionResult {
         const partitioned = this.admissionController.evaluateClaims(claims, sector);
         const scm = this.causalGate.buildDomainSCM(sector);
-        const causalCheck = this.evaluateCausalCheck(sector);
-        const scenarios = this.buildStressScenarios(sector);
+        const inputs = extractCausalInputs(sector, pitch);
+        const causalCheck = this.causalGate.preFlightCheck(scm, inputs);
+        const scenarios = this.causalGate.buildStressScenarios(sector, inputs);
         const isClimate = sector === 'climate' || sector === 'energy';
+        const quarantined = this.mapQuarantined(partitioned.rejected);
+
+        if (!causalCheck.isAdmitted && causalCheck.violations.length > 0) {
+            for (const v of causalCheck.violations) {
+                quarantined.push({
+                    assertion: 'Economic Identity Inconsistency',
+                    contradiction: v,
+                    severity: 'CRITICAL',
+                    rejectionReason: RejectionReason.CAUSAL_INCONSISTENCY
+                });
+            }
+        }
 
         return {
             regime: DiligenceRegime.FULL_DILIGENCE_GATE,
@@ -155,7 +180,7 @@ export class RegimeExecutionService {
             canaryScore: this.buildScore(causalCheck.isAdmitted && partitioned.rejected.length === 0),
             quarantine: {
                 verifiedClaims: this.mapVerified(partitioned.promoted, 'Physical identity verified', 'VERIFIED'),
-                quarantinedAssertions: this.mapQuarantined(partitioned.rejected)
+                quarantinedAssertions: quarantined
             },
             causalSensitivity: {
                 criticalAssumption: isClimate
@@ -167,42 +192,6 @@ export class RegimeExecutionService {
             icPunchList: getDomainICPunchList(sector),
             scmGraph: scm
         };
-    }
-
-    private evaluateCausalCheck(sector: string): CausalPreFlightResult {
-        const scm = this.causalGate.buildDomainSCM(sector);
-        const inputs: Record<string, number> = sector === 'climate' || sector === 'energy'
-            ? { electricity_price: 120, stack_efficiency: 52, market_offtake_price: 2.0 }
-            : { token_inference_cost: 0.005, agent_loop_iterations: 20, subscription_price_per_task: 0.05 };
-        return this.causalGate.preFlightCheck(scm, inputs);
-    }
-
-    private buildStressScenarios(sector: string): Array<{ parameter: string; shift: string; impact: string }> {
-        if (sector === 'climate' || sector === 'energy') {
-            const sweep = this.causalGate.runSensitivitySweep(
-                'electricity_price',
-                [10, 30, 60, 100],
-                { stack_efficiency: 52, market_offtake_price: 2.0 },
-                'climate'
-            );
-            return sweep.map((pt) => ({
-                parameter: `Power @ €${pt.parameterValue}/MWh`,
-                shift: `Margin: €${pt.grossMargin}/kg`,
-                impact: pt.isSolvent ? 'Solvent operation' : 'Insolvent bankruptcy cliff'
-            }));
-        }
-
-        const sweep = this.causalGate.runSensitivitySweep(
-            'token_inference_cost',
-            [0.001, 0.003, 0.006, 0.015],
-            { agent_loop_iterations: 15, subscription_price_per_task: 0.05 },
-            'ai'
-        );
-        return sweep.map((pt) => ({
-            parameter: `Token Rate @ $${pt.parameterValue}/1k`,
-            shift: `Margin: $${pt.grossMargin}/task`,
-            impact: pt.isSolvent ? 'Solvent operation' : 'Insolvent unit economics failure'
-        }));
     }
 
     private buildScore(isAdmitted: boolean) {

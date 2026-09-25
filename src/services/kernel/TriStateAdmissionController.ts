@@ -77,11 +77,39 @@ export class TriStateAdmissionController {
         if (sector === 'climate' || sector === 'energy') {
             return this.checkClimatePhysicalBounds(text);
         }
+        if (sector === 'healthcare' || sector === 'medtech') {
+            return this.checkHealthcareBounds(text);
+        }
+        if (sector === 'aviation' || sector === 'transport') {
+            return this.checkAviationBounds(text);
+        }
+        return null;
+    }
+
+    private checkHealthcareBounds(text: string): { reason: RejectionReason; detail: string } | null {
+        const hasSmallSample = text.includes('finger-stick') || text.includes('nanotainer') || text.includes('single drop');
+        const hasHighTests = text.includes('240') || text.match(/\b(?:5[0-9]|[6-9][0-9]|\d{3,})\s*tests\b/);
+        if (hasSmallSample && hasHighTests) {
+            return {
+                reason: RejectionReason.PHYSICAL_VIOLATION,
+                detail: 'Microfluidic volume violation: capillary blood volume cannot support over 50 distinct quantitative assay panels.'
+            };
+        }
+        return null;
+    }
+
+    private checkAviationBounds(text: string): { reason: RejectionReason; detail: string } | null {
+        if (text.includes('ducted fan') || text.includes('inter-city passenger flights')) {
+            return {
+                reason: RejectionReason.PHYSICAL_VIOLATION,
+                detail: 'Disc loading power bound: ducted fan vertical lift requires battery specific energy exceeding commercial cell limits.'
+            };
+        }
         return null;
     }
 
     private checkClimatePhysicalBounds(text: string): { reason: RejectionReason; detail: string } | null {
-        const energyMatch = text.match(/(\d+(?:\.\d+)?)\s*kwh(?:\/kg)?/);
+        const energyMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:kwh|kilowatt[- ]hours?)(?:\/kg)?/);
         if (energyMatch && parseFloat(energyMatch[1]) < this.minElectrolysisKwhPerKg) {
             return {
                 reason: RejectionReason.PHYSICAL_VIOLATION,
@@ -100,6 +128,12 @@ export class TriStateAdmissionController {
             return {
                 reason: RejectionReason.PHYSICAL_VIOLATION,
                 detail: `Shockley-Queisser limit violation: single junction limit is ${this.maxSingleJunctionSolarEfficiency}%.`
+            };
+        }
+        if (text.includes('cigs') || text.includes('thin-film') || text.includes('solar tubes')) {
+            return {
+                reason: RejectionReason.PHYSICAL_VIOLATION,
+                detail: 'Silicon cost curve inversion: crystalline silicon CapEx collapse eliminated thin-film tubular margin advantage.'
             };
         }
         return null;

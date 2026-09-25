@@ -52,4 +52,13 @@ test.describe('RegimeExecutionService', () => {
         expect(result.causalSensitivity.criticalAssumption).toContain('Inference token cost');
         expect(result.icPunchList[0].question).toContain('multi-turn compounding error rate');
     });
+
+    test('should admit viable AI startup with positive unit margin and bounded execution', () => {
+        const viablePitch = 'SpecGuard: Charges $0.15 per compilation run, bounding compute token cost to $0.003 per run over a 3-turn loop with provable safety proofs.';
+        const result = service.executeRegime(DiligenceRegime.FULL_DILIGENCE_GATE, viablePitch, 'ai', []);
+        expect(result.regime).toBe(DiligenceRegime.FULL_DILIGENCE_GATE);
+        expect(result.canaryScore.grade).not.toBe('F');
+        expect(result.quarantine.quarantinedAssertions.length).toBe(0);
+        expect(result.canaryScore.total).toBeGreaterThanOrEqual(700);
+    });
 });
