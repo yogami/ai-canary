@@ -59,9 +59,16 @@ export default function QuarantineTables({ verifiedClaims, quarantinedAssertions
                                 <div key={idx} className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-2.5">
                                     <div className="flex items-center justify-between mb-1">
                                         <p className="text-white text-xs font-medium">{item.assertion}</p>
-                                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${badgeClass}`}>
-                                            {item.severity}
-                                        </span>
+                                        <div className="flex items-center gap-1.5">
+                                            {item.rejectionReason && (
+                                                <span className="text-[9px] px-1.5 py-0.5 rounded font-mono bg-red-950/60 text-red-300 border border-red-500/30">
+                                                    {item.rejectionReason}
+                                                </span>
+                                            )}
+                                            <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${badgeClass}`}>
+                                                {item.severity}
+                                            </span>
+                                        </div>
                                     </div>
                                     <p className="text-amber-300/90 text-[11px] mt-1 flex items-start gap-1">
                                         <span className="text-red-400 font-bold">Conflict:</span> {item.contradiction}

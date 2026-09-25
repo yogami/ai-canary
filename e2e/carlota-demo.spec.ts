@@ -200,7 +200,7 @@ test.describe('AICanary Diligence Engine: Carlota Acceptance Suite', () => {
         await textarea.fill('OmniDev: Autonomous AI software engineering agency that guarantees 100% bug-free deployments for $20/month per seat.');
 
         // Select AI niche
-        await page.locator('button', { hasText: '🤖 AI / LLMs' }).click();
+        await page.locator('button', { hasText: '🤖 AI/Tech' }).click();
 
         // Run Due Diligence Gate
         await page.locator('button', { hasText: 'Run Due Diligence Gate' }).click();

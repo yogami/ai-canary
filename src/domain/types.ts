@@ -82,6 +82,7 @@ export interface QuarantinedAssertion {
     assertion: string;
     contradiction: string;
     severity: 'CRITICAL' | 'WARNING';
+    rejectionReason?: string;
 }
 
 export interface StressScenario {
