@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "playwright test",
+    "test:unit": "playwright test -c playwright.unit.config.ts",
     "test:e2e": "playwright test --reporter=list"
   },
   "dependencies": {
