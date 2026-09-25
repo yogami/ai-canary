@@ -96,10 +96,18 @@ function syncAgenticDiligenceWithKernel(analysis: any, r3: any) {
         analysis.agenticDiligence.icPunchList = r3.icPunchList;
     }
     if (r3.canaryScore.grade === 'F') {
+        const fallbackFactors = {
+            growthPotential: { score: 50, reasoning: 'Capped by physical limits' },
+            competitiveDensity: { score: 50, reasoning: 'Incumbents hold lower cost' },
+            timingSignal: { score: 60, reasoning: 'Premature commercialization' },
+            defensibility: { score: 60, reasoning: 'Vulnerable to diligence discovery' }
+        };
         analysis.canaryScore = {
+            ...analysis.canaryScore,
             total: Math.min(analysis.canaryScore?.total || 600, 220),
             grade: 'F',
-            verdict: r3.canaryScore.verdict
+            verdict: r3.canaryScore.verdict,
+            factors: analysis.canaryScore?.factors || fallbackFactors
         };
     }
 }

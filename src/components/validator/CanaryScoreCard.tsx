@@ -37,45 +37,45 @@ export default function CanaryScoreCard({ canaryScore }: CanaryScoreCardProps) {
                 <div className="bg-green-950/30 border border-green-500/20 rounded-xl p-3">
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-green-400 font-semibold text-sm">📈 Growth Potential</span>
-                        <span className="text-green-300 font-bold">{canaryScore.factors.growthPotential?.score || 0}/500</span>
+                        <span className="text-green-300 font-bold">{canaryScore.factors?.growthPotential?.score || 0}/500</span>
                     </div>
                     <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
-                        <div className="bg-green-500 h-2 rounded-full" style={{ width: `${((canaryScore.factors.growthPotential?.score || 0) / 500) * 100}%` }}></div>
+                        <div className="bg-green-500 h-2 rounded-full" style={{ width: `${((canaryScore.factors?.growthPotential?.score || 0) / 500) * 100}%` }}></div>
                     </div>
-                    <p className="text-gray-400 text-xs">{canaryScore.factors.growthPotential?.reasoning}</p>
+                    <p className="text-gray-400 text-xs">{canaryScore.factors?.growthPotential?.reasoning}</p>
                 </div>
 
                 <div className="bg-blue-950/30 border border-blue-500/20 rounded-xl p-3">
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-blue-400 font-semibold text-sm">⚔️ Competition</span>
-                        <span className="text-blue-300 font-bold">{canaryScore.factors.competitiveDensity?.score || 0}/200</span>
+                        <span className="text-blue-300 font-bold">{canaryScore.factors?.competitiveDensity?.score || 0}/200</span>
                     </div>
                     <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
-                        <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${((canaryScore.factors.competitiveDensity?.score || 0) / 200) * 100}%` }}></div>
+                        <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${((canaryScore.factors?.competitiveDensity?.score || 0) / 200) * 100}%` }}></div>
                     </div>
-                    <p className="text-gray-400 text-xs">{canaryScore.factors.competitiveDensity?.reasoning}</p>
+                    <p className="text-gray-400 text-xs">{canaryScore.factors?.competitiveDensity?.reasoning}</p>
                 </div>
 
                 <div className="bg-purple-950/30 border border-purple-500/20 rounded-xl p-3">
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-purple-400 font-semibold text-sm">⏰ Timing</span>
-                        <span className="text-purple-300 font-bold">{canaryScore.factors.timingSignal?.score || 0}/150</span>
+                        <span className="text-purple-300 font-bold">{canaryScore.factors?.timingSignal?.score || 0}/150</span>
                     </div>
                     <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
-                        <div className="bg-purple-500 h-2 rounded-full" style={{ width: `${((canaryScore.factors.timingSignal?.score || 0) / 150) * 100}%` }}></div>
+                        <div className="bg-purple-500 h-2 rounded-full" style={{ width: `${((canaryScore.factors?.timingSignal?.score || 0) / 150) * 100}%` }}></div>
                     </div>
-                    <p className="text-gray-400 text-xs">{canaryScore.factors.timingSignal?.reasoning}</p>
+                    <p className="text-gray-400 text-xs">{canaryScore.factors?.timingSignal?.reasoning}</p>
                 </div>
 
                 <div className="bg-orange-950/30 border border-orange-500/20 rounded-xl p-3">
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-orange-400 font-semibold text-sm">🛡️ Defensibility</span>
-                        <span className="text-orange-300 font-bold">{canaryScore.factors.defensibility?.score || 0}/150</span>
+                        <span className="text-orange-300 font-bold">{canaryScore.factors?.defensibility?.score || 0}/150</span>
                     </div>
                     <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
-                        <div className="bg-orange-500 h-2 rounded-full" style={{ width: `${((canaryScore.factors.defensibility?.score || 0) / 150) * 100}%` }}></div>
+                        <div className="bg-orange-500 h-2 rounded-full" style={{ width: `${((canaryScore.factors?.defensibility?.score || 0) / 150) * 100}%` }}></div>
                     </div>
-                    <p className="text-gray-400 text-xs">{canaryScore.factors.defensibility?.reasoning}</p>
+                    <p className="text-gray-400 text-xs">{canaryScore.factors?.defensibility?.reasoning}</p>
                 </div>
             </div>
         </div>
